@@ -1,0 +1,4 @@
+[submodule "tools/bwa"]
+	path = tools/bwa
+	url = https://github.com/arun-sub/bwa.git
+	branch = master
