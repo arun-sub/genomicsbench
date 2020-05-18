@@ -2,3 +2,7 @@
 	path = tools/bwa
 	url = https://github.com/arun-sub/bwa.git
 	branch = master
+[submodule "tools/GKL"]
+	path = tools/GKL
+	url = https://github.com/arun-sub/GKL.git
+	branch = pv_c_interface
