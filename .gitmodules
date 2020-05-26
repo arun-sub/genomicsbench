@@ -9,3 +9,6 @@
 [submodule "tools/bwa-mem2"]
 	path = tools/bwa-mem2
 	url = https://github.com/bwa-mem2/bwa-mem2.git
+[submodule "tools/lapidary"]
+	path = tools/lapidary
+	url = https://github.com/arun-sub/lapidary.git
