@@ -12,3 +12,9 @@
 [submodule "tools/lapidary"]
 	path = tools/lapidary
 	url = https://github.com/arun-sub/lapidary.git
+[submodule "tools/minimap2"]
+	path = tools/minimap2
+	url = https://github.com/arun-sub/minimap2.git
+[submodule "tools/minimap2-acceleration"]
+	path = tools/minimap2-acceleration
+	url = https://github.com/arun-sub/minimap2-acceleration.git
