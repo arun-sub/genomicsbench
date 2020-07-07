@@ -18,3 +18,12 @@
 [submodule "tools/minimap2-acceleration"]
 	path = tools/minimap2-acceleration
 	url = https://github.com/arun-sub/minimap2-acceleration.git
+[submodule "tools/spoa"]
+	path = tools/spoa
+	url = https://github.com/arun-sub/spoa.git
+[submodule "tools/abPOA"]
+	path = tools/abPOA
+	url = https://github.com/arun-sub/abPOA.git
+[submodule "tools/racon"]
+	path = tools/racon
+	url = https://github.com/arun-sub/racon.git
