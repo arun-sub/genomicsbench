@@ -1,0 +1,10 @@
+Clair/*.pyc
+Clair/*.vscode
+Clair/*.h5
+Clair/*.txt
+Clair/*.tar
+Clair/*csv*
+Clair/*.xlsx
+Clair/model.*
+Clair/testingData*
+Clair/training/

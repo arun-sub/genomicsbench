@@ -27,3 +27,6 @@
 [submodule "tools/racon"]
 	path = tools/racon
 	url = https://github.com/arun-sub/racon.git
+[submodule "tools/Clair"]
+	path = tools/Clair
+	url = https://github.com/HKU-BAL/Clair.git
