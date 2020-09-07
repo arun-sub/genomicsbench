@@ -29,4 +29,7 @@
 	url = https://github.com/arun-sub/racon.git
 [submodule "tools/Clair"]
 	path = tools/Clair
-	url = https://github.com/HKU-BAL/Clair.git
+	url = https://github.com/Yufeng98/Clair.git
+[submodule "tools/nanopolish"]
+	path = tools/nanopolish
+	url = https://github.com/Yufeng98/nanopolish.git
