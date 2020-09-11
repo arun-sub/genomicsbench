@@ -36,3 +36,6 @@
 [submodule "popgen/plink-ng"]
 	path = popgen/plink-ng
 	url = https://github.com/arun-sub/plink-ng.git
+[submodule "popgen/gwas-speedup"]
+	path = popgen/gwas-speedup
+	url = https://github.com/arun-sub/gwas-speedup.git
