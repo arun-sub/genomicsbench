@@ -1,3 +1,11 @@
+Command line:
+
+POA: ./poa --read_fasta <poa-180> -clustal <clustal-180.out> -hb <blosum80.mat>
+
+SPOA: ./msa_spoa -s <input-1000.fasta> -r
+
+abPOA: ./msa_abPOA -s <input-1000.fasta> -r
+
 
 -- POA INSTALLATION NOTES --
 September 2001, updated March 2004.

@@ -1,0 +1,1 @@
+Command line: CHECK=1 LOOP=50 ./pairhmm <path to .in file>
