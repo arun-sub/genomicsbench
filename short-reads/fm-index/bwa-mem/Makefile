@@ -1,4 +1,4 @@
-BWA_PATH=/home/arunsub/winter_20/punnet/tools/bwa
+BWA_PATH=../../../tools/bwa
 
 EXE=fmi_smem_reseed_test
 CC=gcc
