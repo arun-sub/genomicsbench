@@ -4,7 +4,7 @@ Three kernels from PLINK are taken.
 
 PLINK1.9: Download chr1 dataset from [here](https://www.cog-genomics.org/plink/2.0/resources#1kg_phase3). We need the .pgen, .pvar and pedigree-corrected .psam files.
 
-PLINK2: Download chr1 dataset from ftp://parrot.genomics.cn/gigadb/pub/10.5524/100001\_101000/100116/1kg\_phase1\_chr1.tar.gz.
+PLINK2: Download chr1 dataset from ftp://parrot.genomics.cn/gigadb/pub/10.5524/100001_101000/100116/1kg_phase1_chr1.tar.gz.
 
 ### Command lines
 * --make-grm-bin (PLINK1.9 and PLINK2)
