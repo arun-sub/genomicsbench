@@ -1,1 +1,3 @@
 Command line: ./kernel <in-1k.txt> <out-kernel-1k.txt>
+
+add /opt/intel/compilers_and_libraries_2020.0.166/linux/compiler/lib/intel64_lin/ to $LD_LIBRARY_PATH
