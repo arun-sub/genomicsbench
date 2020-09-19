@@ -1,3 +1,4 @@
-Command line: ./kernel <in-1k.txt> <out-kernel-1k.txt>
+export LD_LIBRARY_PATH=/opt/intel/compilers_and_libraries_2020.0.166/linux/compiler/lib/intel64_lin/:$LD_LIBRARY_PATH
+source ~/.bashrc
 
-add /opt/intel/compilers_and_libraries_2020.0.166/linux/compiler/lib/intel64_lin/ to $LD_LIBRARY_PATH
+Command line: ./kernel <in-1k.txt> <out-kernel-1k.txt>
