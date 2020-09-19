@@ -1,6 +1,6 @@
 Command line:
 
-POA: ./poa --read_fasta <poa-180> -clustal <clustal-180.out> -hb <blosum80.mat>
+POA: ./poa -read_fasta <poa-180> -clustal <clustal-180.out> -hb <blosum80.mat>
 
 SPOA: ./msa_spoa -s <input-1000.fasta> -r
 
