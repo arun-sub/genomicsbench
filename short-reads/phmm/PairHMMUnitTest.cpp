@@ -25,6 +25,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #include <omp.h>
+#include <getopt.h>
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -46,6 +47,34 @@ long g_cpu_total_time = 0;
 long g_fpga_total_time = 0;
 long g_total_cells = 0;
 
+static const char *USAGE_MESSAGE =
+"  -f, --testfile                       name of test file\n"
+"  -b, --batch                          num of batches\n"
+"  -p, --num_pe                         num of PEs\n"
+"  -c, --check                          check or not\n"
+"  -l, --loop                           num of loop";
+
+namespace opt
+{
+    const char* testfile;
+    int batch = -1;
+    int num_pe = 0;
+    bool check = false;
+    int loop = 1;
+}
+
+static const char* shortopts = "f:b:p:cl:";
+
+enum { OPT_HELP = 1 };
+
+static const struct option longopts[] = {
+    { "testfile",       required_argument, NULL, 'f' },
+    { "batch",          required_argument, NULL, 'b' },
+    { "num_pe",         required_argument, NULL, 'p' },
+    { "check",          no_argument,       NULL, 'c' },
+    { "loop",           required_argument, NULL, 'l' },
+    { NULL, 0, NULL, 0 }
+};
 
 void initPairHMM();
 void computelikelihoodsfloat(testcase *testcases, float *expected_result);
@@ -181,6 +210,20 @@ void time_pairhmm(Batch& batch, int num_pe=0, bool check=false) {
 }
 
 int main(int argc, char** argv) {
+
+  for (char c; (c = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1;) {
+        switch (c) {
+            case 'f': opt::testfile = optarg; break;
+            case 'b': opt::batch = stoi(optarg); break;
+            case 'p': opt::num_pe = stoi(optarg); break;
+            case 'l': opt::loop = stoi(optarg); break;
+            case 'c': opt::check = true; break;
+            case OPT_HELP:
+                std::cout << USAGE_MESSAGE;
+                exit(EXIT_SUCCESS);
+        }
+    }
+
   // disable stdout buffering
   setbuf(stdout, NULL);
 
@@ -190,51 +233,51 @@ int main(int argc, char** argv) {
 
   vector<Batch> batches;
 
-  // simple arg passing through env with no checking for now
-  const char* env_batch = getenv("BATCH");
-  int batch = env_batch ? atoi(env_batch) : -1;
+  // // simple arg passing through env with no checking for now
+  // const char* env_batch = getenv("BATCH");
+  // int batch = env_batch ? atoi(env_batch) : -1;
 
-  const char* env_check = getenv("CHECK");
-  bool check = env_check ? (atoi(env_check) ? true : false) : false;
+  // const char* env_check = getenv("CHECK");
+  // bool check = env_check ? (atoi(env_check) ? true : false) : false;
 
-  #ifdef CPU_ONLY
-  check = true;
-  #endif
+  // #ifdef CPU_ONLY
+  // check = true;
+  // #endif
 
-  const char* env_loop = getenv("LOOP");
-  int loop = env_loop ? atoi(env_loop) : 1;
+  // const char* env_loop = getenv("LOOP");
+  // int loop = env_loop ? atoi(env_loop) : 1;
 
-  const char* env_num_pe = getenv("NUM_PE");
-  int num_pe = env_num_pe ? atoi(env_num_pe) : 0;
+  // const char* env_num_pe = getenv("NUM_PE");
+  // int num_pe = env_num_pe ? atoi(env_num_pe) : 0;
 
-  const char* env_testfile = argv[1];
+  // const char* env_testfile = argv[1];
 
 
-  // display config
-  printf("Environment variable values:\n");
-  printf("  TESTFILE = %s\n", env_testfile);
-  printf("  BATCH    = %s\n", batch > 0 ? env_batch : "undefined (all batches)");
-  printf("  NUM_PE   = %s\n", num_pe > 0 ? env_num_pe : "undefined (all PEs)");
-  printf("  CHECK    = %d\n", check);
-  printf("  LOOP     = %d\n", loop);
+  // // display config
+  // printf("Environment variable values:\n");
+  // printf("  TESTFILE = %s\n", env_testfile);
+  // printf("  BATCH    = %s\n", batch > 0 ? env_batch : "undefined (all batches)");
+  // printf("  NUM_PE   = %s\n", num_pe > 0 ? env_num_pe : "undefined (all PEs)");
+  // printf("  CHECK    = %d\n", check);
+  // printf("  LOOP     = %d\n", loop);
 
-  batches = read_testfile(env_testfile);
+  batches = read_testfile(opt::testfile);
 
   // run single batch or all batches
-  if (batch >= 0) {
-    while (loop) {
-      printf("Batch %d\n", batch);
-      time_pairhmm(batches[batch], num_pe, check);
-      loop--;
+  if (opt::batch >= 0) {
+    while (opt::loop) {
+      printf("Batch %d\n", opt::batch);
+      time_pairhmm(batches[opt::batch], opt::num_pe, opt::check);
+      opt::loop--;
     }
   }
   else {
-    while (loop) {
+    while (opt::loop) {
       for (int i = 0; i < batches.size(); i++) {
         printf("Batch %d\n", i);
-        time_pairhmm(batches[i], num_pe, check);
+        time_pairhmm(batches[i], opt::num_pe, opt::check);
       }
-      loop--;
+      opt::loop--;
     }
   }
 
