@@ -1,20 +1,17 @@
 CC      = gcc
-CFLAGS= -O3 -std=c++11
+CFLAGS= -g -O2 -std=c++11
 GKLPATH= ../../tools/GKL
-SHARED_LIBRARIES = -L$(GKLPATH)/build/native -lgkl_pairhmm_c -lstdc++
+SHARED_LIBRARIES = -fopenmp -L$(GKLPATH)/build/native -lgkl_pairhmm_c -lstdc++
 
-all: pairhmm clean
+all: pairhmm
 
 pairhmm: PairHMMUnitTest.o
 	$(CC) -o $@ $(SHARED_LIBRARIES) $^ $(CFLAGS)
 
 PairHMMUnitTest.o: PairHMMUnitTest.cpp PairHMMUnitTest.h
-	$(CC) -c $(CFLAGS) $<
+	$(CC) -c $(CFLAGS) -fopenmp $<
 
-.PHONY: clean cleanest
+.PHONY: clean
 
 clean:
-	rm *.o
-
-cleanest: clean
-	rm pairhmm
+	rm pairhmm *.o

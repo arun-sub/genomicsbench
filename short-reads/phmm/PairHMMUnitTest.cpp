@@ -39,40 +39,32 @@
 using namespace std;
 using namespace shacc_pairhmm;
 
-int g_total_pass = 0;
-int g_total_fail = 0;
-float g_cpu_max_perf = 0;
-float g_fpga_max_perf = 0;
-long g_cpu_total_time = 0;
-long g_fpga_total_time = 0;
+#define PRINT_OUTPUT
+#define MAX_BATCHES 1000000
+#define MAX_BATCH_SIZE 50000
+
 long g_total_cells = 0;
 
 static const char *USAGE_MESSAGE =
 "  -f, --testfile                       name of test file\n"
-"  -b, --batch                          num of batches\n"
-"  -p, --num_pe                         num of PEs\n"
-"  -c, --check                          check or not\n"
-"  -l, --loop                           num of loop";
+"  -l, --loop                           num of loop\n"
+"  -t  --threads                        number of threads\n";
 
 namespace opt
 {
     const char* testfile;
-    int batch = -1;
-    int num_pe = 0;
-    bool check = false;
     int loop = 1;
+    int nThreads = 1;
 }
 
-static const char* shortopts = "f:b:p:cl:";
+static const char* shortopts = "f:l:t:";
 
 enum { OPT_HELP = 1 };
 
 static const struct option longopts[] = {
     { "testfile",       required_argument, NULL, 'f' },
-    { "batch",          required_argument, NULL, 'b' },
-    { "num_pe",         required_argument, NULL, 'p' },
-    { "check",          no_argument,       NULL, 'c' },
     { "loop",           required_argument, NULL, 'l' },
+    { "threads",        required_argument, NULL, 't' },
     { NULL, 0, NULL, 0 }
 };
 
@@ -82,205 +74,158 @@ void computelikelihoodsboth(testcase *testcases, double *expected_result, int ba
 
 
 void normalize(string& str, int min_value=0) {
-  for (int i = 0; i < str.length(); i++) {
-    str[i] = max(min_value, str[i] - 33);
-  }
+    for (int i = 0; i < str.length(); i++) {
+        str[i] = max(min_value, str[i] - 33);
+    }
 }
 
 Batch read_batch(istream &is) {
-  Batch batch;
+    Batch batch;
 
-  is >> batch.num_reads >> batch.num_haps >> ws;
+    is >> batch.num_reads >> batch.num_haps >> ws;
 
-  batch.reads = (Read*)malloc(batch.num_reads * sizeof(Read));
-  batch.haps = (Haplotype*)malloc(batch.num_haps * sizeof(Haplotype));
-  batch.results = (float*)malloc(sizeof(float) * batch.num_reads * batch.num_haps);
+    batch.reads = (Read*)_mm_malloc(batch.num_reads * sizeof(Read), 64);
+    batch.haps = (Haplotype*)_mm_malloc(batch.num_haps * sizeof(Haplotype), 64);
+    batch.results = (double*)_mm_malloc(sizeof(double) * batch.num_reads * batch.num_haps, 64);
 
-  long total_read_length = 0;
-  long total_hap_length = 0;
+    long total_read_length = 0;
+    long total_hap_length = 0;
 
-  for (int r = 0; r < batch.num_reads; r++) {
-    string bases, q, i, d, c;
-    is >> bases >> q >> i >> d >> c >> ws;
-    normalize(q, 6);
-    normalize(i);
-    normalize(d);
-    normalize(c);
-    int length = bases.size();
-    total_read_length += length;
+    for (int r = 0; r < batch.num_reads; r++) {
+        string bases, q, i, d, c;
+        is >> bases >> q >> i >> d >> c >> ws;
+        normalize(q, 6);
+        normalize(i);
+        normalize(d);
+        normalize(c);
+        int length = bases.size();
+        total_read_length += length;
 
-    Read* read = &batch.reads[r];
-    read->length = length;
-    read->bases = strndup(bases.c_str(), length);
-    read->q = strndup(q.c_str(), length);
-    read->i = strndup(i.c_str(), length);
-    read->d = strndup(d.c_str(), length);
-    read->c = strndup(c.c_str(), length);
-  }
+        Read* read = &batch.reads[r];
+        read->length = length;
+        read->bases = strndup(bases.c_str(), length);
+        read->q = strndup(q.c_str(), length);
+        read->i = strndup(i.c_str(), length);
+        read->d = strndup(d.c_str(), length);
+        read->c = strndup(c.c_str(), length);
+    }
 
-  for (int h = 0; h < batch.num_haps; h++) {
-    string bases;
-    is >> bases >> ws;
-    int length = bases.size();
-    total_hap_length += length;
+    for (int h = 0; h < batch.num_haps; h++) {
+        string bases;
+        is >> bases >> ws;
+        int length = bases.size();
+        total_hap_length += length;
 
-    Haplotype* hap = &batch.haps[h];
-    hap->length = length;
-    hap->bases = strndup(bases.c_str(), length);
-  }
+        Haplotype* hap = &batch.haps[h];
+        hap->length = length;
+        hap->bases = strndup(bases.c_str(), length);
+    }
 
-  batch.num_cells = total_read_length * total_hap_length;
+    batch.num_cells = total_read_length * total_hap_length;
 
-  return batch;
+    return batch;
 }
 
 vector<Batch> read_testfile(string filename) {
-  istream *is;
-  ifstream ifs;
-  if (filename == "") {
-    printf("Reading test data from stdin");
-    is = &std::cin;
-  }
-  else {
-    printf("Reading test data from file: %s\n", filename.c_str());
-    ifs.open(filename.c_str());
-    if (!ifs.is_open()) {
-      printf("Cannot open file : %s", filename.c_str());
-      exit(0);
+    istream *is;
+    ifstream ifs;
+    if (filename == "") {
+        printf("Reading test data from stdin");
+        is = &std::cin;
     }
-    is = &ifs;
-  }
-
-  vector<Batch> batches;
-  while (!is->eof()) {
-    Batch batch = read_batch(*is);
-    batches.push_back(batch);
-  }
-
-  return batches;
-}
-
-
-void check_results(Batch& batch) {
-  int batch_size = batch.num_reads * batch.num_haps;
-  // vector<double> expected_results(batch_size);
-  double expected_results[batch_size];
-  testcase testcases[batch_size];
-
-  testcase *tc = testcases;
-  for (int r = 0; r < batch.num_reads; r++) {
-    for (int h = 0; h < batch.num_haps; h++) {
-      tc->rslen = batch.reads[r].length;
-      tc->haplen = batch.haps[h].length;
-      tc->hap = batch.haps[h].bases;
-      tc->rs = batch.reads[r].bases;
-      tc->q = batch.reads[r].q;
-      tc->i = batch.reads[r].i;
-      tc->d = batch.reads[r].d;
-      tc->c = batch.reads[r].c;
-      tc++;
+    else {
+        printf("Reading test data from file: %s\n", filename.c_str());
+        ifs.open(filename.c_str());
+        if (!ifs.is_open()) {
+            printf("Cannot open file : %s", filename.c_str());
+            exit(0);
+        }
+        is = &ifs;
     }
-  }
 
-  computelikelihoodsboth(testcases, expected_results, batch_size);
-  
-  for (int i = 0; i < batch_size; i++) {
-    // computelikelihoodsfloat(&testcases[i], &expected_results[i]);
-  	printf("%lf\n", expected_results[i]);
-  }
-
-  return;
-}
-
-void time_pairhmm(Batch& batch, int num_pe=0, bool check=false) {
-
-  long batch_cells = 0;
-  for (int r = 0; r < batch.num_reads; r++) {
-    for (int h = 0; h < batch.num_haps; h++) {
-      batch_cells += batch.reads[r].length * batch.haps[h].length;
+    vector<Batch> batches;
+    while (!is->eof()) {
+        Batch batch = read_batch(*is);
+        batches.push_back(batch);
     }
-  }
 
-  g_total_cells += batch_cells;
-
-  if (check) {
-    check_results(batch);
-  }
-  return;
+    return batches;
 }
 
 int main(int argc, char** argv) {
 
-  for (char c; (c = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1;) {
+    for (char c; (c = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1;) {
         switch (c) {
             case 'f': opt::testfile = optarg; break;
-            case 'b': opt::batch = stoi(optarg); break;
-            case 'p': opt::num_pe = stoi(optarg); break;
             case 'l': opt::loop = stoi(optarg); break;
-            case 'c': opt::check = true; break;
+            case 't': opt::nThreads = stoi(optarg); break;
             case OPT_HELP:
                 std::cout << USAGE_MESSAGE;
                 exit(EXIT_SUCCESS);
         }
     }
 
-  // disable stdout buffering
-  setbuf(stdout, NULL);
+    // disable stdout buffering
+    setbuf(stdout, NULL);
 
-  initPairHMM();
+    initPairHMM();
 
-  ConvertChar::init();
+    ConvertChar::init();
 
-  vector<Batch> batches;
+    vector<Batch> batches;
+    batches = read_testfile(opt::testfile);
+    printf("Num Batches %d, Num threads %d\n", batches.size(), opt::nThreads);
 
-  // // simple arg passing through env with no checking for now
-  // const char* env_batch = getenv("BATCH");
-  // int batch = env_batch ? atoi(env_batch) : -1;
+    testcase* testcases = (testcase *)_mm_malloc(MAX_BATCH_SIZE * opt::nThreads * sizeof(testcase), 64);
 
-  // const char* env_check = getenv("CHECK");
-  // bool check = env_check ? (atoi(env_check) ? true : false) : false;
-
-  // #ifdef CPU_ONLY
-  // check = true;
-  // #endif
-
-  // const char* env_loop = getenv("LOOP");
-  // int loop = env_loop ? atoi(env_loop) : 1;
-
-  // const char* env_num_pe = getenv("NUM_PE");
-  // int num_pe = env_num_pe ? atoi(env_num_pe) : 0;
-
-  // const char* env_testfile = argv[1];
-
-
-  // // display config
-  // printf("Environment variable values:\n");
-  // printf("  TESTFILE = %s\n", env_testfile);
-  // printf("  BATCH    = %s\n", batch > 0 ? env_batch : "undefined (all batches)");
-  // printf("  NUM_PE   = %s\n", num_pe > 0 ? env_num_pe : "undefined (all PEs)");
-  // printf("  CHECK    = %d\n", check);
-  // printf("  LOOP     = %d\n", loop);
-
-  batches = read_testfile(opt::testfile);
-
-  // run single batch or all batches
-  if (opt::batch >= 0) {
-    while (opt::loop) {
-      printf("Batch %d\n", opt::batch);
-      time_pairhmm(batches[opt::batch], opt::num_pe, opt::check);
-      opt::loop--;
+    #pragma omp parallel num_threads(opt::nThreads)
+    {
+        int tid = omp_get_thread_num();
+        if (tid == 0) {
+            printf("Running %d threads\n", opt::nThreads);
+        }
     }
-  }
-  else {
-    while (opt::loop) {
-      for (int i = 0; i < batches.size(); i++) {
-        printf("Batch %d\n", i);
-        time_pairhmm(batches[i], opt::num_pe, opt::check);
-      }
-      opt::loop--;
-    }
-  }
 
-  printf("\nPairHMM completed.\n");
+    while (opt::loop) {
+        #pragma omp parallel num_threads(opt::nThreads)
+        {
+            int tid = omp_get_thread_num();
+            #pragma omp for schedule(dynamic)
+                for (int i = 0; i < batches.size(); i++) {
+                    int batch_size = batches[i].num_reads * batches[i].num_haps;
+                    assert(batch_size <= MAX_BATCH_SIZE);
+                    testcase *tc = &testcases[tid * MAX_BATCH_SIZE];
+                    for (int r = 0; r < batches[i].num_reads; r++) {
+                        for (int h = 0; h < batches[i].num_haps; h++) {
+                            tc->rslen = batches[i].reads[r].length;
+                            tc->haplen = batches[i].haps[h].length;
+                            tc->hap = batches[i].haps[h].bases;
+                            tc->rs = batches[i].reads[r].bases;
+                            tc->q = batches[i].reads[r].q;
+                            tc->i = batches[i].reads[r].i;
+                            tc->d = batches[i].reads[r].d;
+                            tc->c = batches[i].reads[r].c;
+                            tc++;
+                        }
+                    }
+                    computelikelihoodsboth(&testcases[tid * MAX_BATCH_SIZE], batches[i].results, batch_size);
+                }
+        }
+        opt::loop--;
+    }
+
+    for (int i = 0; i < batches.size(); i++) {
+#ifdef PRINT_OUTPUT
+        int batch_size = batches[i].num_reads * batches[i].num_haps;
+        for (int j = 0; j < batch_size; j++) {
+            printf("%lf\n", batches[i].results[j]);
+        }
+#endif
+        _mm_free(batches[i].reads);
+        _mm_free(batches[i].haps);
+        _mm_free(batches[i].results);
+    }
+    _mm_free(testcases);
+    printf("\nPairHMM completed.\n");
 
 }

@@ -42,3 +42,9 @@
 [submodule "tools/medaka"]
 	path = tools/medaka
 	url = https://github.com/Yufeng98/medaka.git
+[submodule "tools/Platypus"]
+	path = tools/Platypus
+	url = https://github.com/arun-sub/Platypus.git
+[submodule "tools/htslib"]
+	path = tools/htslib
+	url = https://github.com/arun-sub/htslib.git
