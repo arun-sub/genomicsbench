@@ -29,7 +29,7 @@ namespace shacc_pairhmm {
     long num_cells;
     Read* reads;
     Haplotype* haps;
-    float* results;
+    double* results;
   };
 
   extern WEAK bool calculate(Batch& batch);
