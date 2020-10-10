@@ -10,6 +10,8 @@ typedef int32_t loc_t;
 typedef int32_t loc_dist_t;
 typedef int32_t score_t;
 typedef int32_t parent_t;
+typedef int32_t target_t;
+typedef int32_t peak_score_t;
 
 #define ANCHOR_NULL (anchor_idx_t)(-1)
 
@@ -29,6 +31,8 @@ struct return_t {
     anchor_idx_t n;
     std::vector<score_t> scores;
     std::vector<parent_t> parents;
+    std::vector<target_t> targets;
+    std::vector<peak_score_t> peak_scores;
 };
 
 #endif // HOST_INPUT_H
