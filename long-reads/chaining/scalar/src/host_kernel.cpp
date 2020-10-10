@@ -2,46 +2,60 @@
 #include <ctime>
 #include <cstdio>
 #include <cstdlib>
+#include "omp.h"
 #include "host_kernel.h"
 #include "common.h"
+#include "minimap.h"
+#include "mmpriv.h"
+#include "kalloc.h"
+
+static const char LogTable256[256] = {
+#define LT(n) n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n
+	-1, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,
+	LT(4), LT(5), LT(5), LT(6), LT(6), LT(6), LT(6),
+	LT(7), LT(7), LT(7), LT(7), LT(7), LT(7), LT(7), LT(7)
+};
+
+static inline int ilog2_32(uint32_t v)
+{
+	uint32_t t, tt;
+	if ((tt = v>>16)) return (t = tt>>8) ? 24 + LogTable256[t] : 16 + LogTable256[tt];
+	return (t = v>>8) ? 8 + LogTable256[t] : LogTable256[v];
+}
 
 const int BACKSEARCH = 65;
 #define MM_SEED_SEG_SHIFT  48
 #define MM_SEED_SEG_MASK   (0xffULL<<(MM_SEED_SEG_SHIFT))
 
-static inline int32_t ilog2_32(uint32_t v)
-{
-    if (v < 2) return 0;
-    else if (v < 4) return 1;
-    else if (v < 8) return 2;
-    else if (v < 16) return 3;
-    else if (v < 32) return 4;
-    else if (v < 64) return 5;
-    else if (v < 128) return 6;
-    else if (v < 256) return 7;
-    else return 8;
-}
-
-void chain_dp(int max_dist_x, int max_dist_y, int bw, float avg_qspan, int n_segs, int64_t n, call_t* a, return_t* ret)
+void chain_dp(call_t* a, return_t* ret)
 {
 
 	// TODO: make sure this works when n has more than 32 bits
 	int64_t i, j, st = 0;
 	int is_cdna = 0;
+    const float gap_scale = 1.0f;
+    const int max_iter = 5000;
+    const int max_skip = 25;
+    int max_dist_x = a->max_dist_x, max_dist_y = a->max_dist_y, bw = a->bw;
+    float avg_qspan = a->avg_qspan;
+    int n_segs = a->n_segs; 
+    int64_t n = a->n;
 	ret->n = n;
 	ret->scores.resize(n);
 	ret->parents.resize(n);
+    ret->targets.resize(n);
+    ret->peak_scores.resize(n);
 
 	// fill the score and backtrack arrays
 	for (i = 0; i < n; ++i) {
 		uint64_t ri = a->anchors[i].x;
 		int64_t max_j = -1;
 		int32_t qi = (int32_t)a->anchors[i].y, q_span = a->anchors[i].y>>32&0xff; // NB: only 8 bits of span is used!!!
-		int32_t max_f = q_span, min_d;
+		int32_t max_f = q_span, n_skip = 0, min_d;
 		int32_t sidi = (a->anchors[i].y & MM_SEED_SEG_MASK) >> MM_SEED_SEG_SHIFT;
 		while (st < i && ri > a->anchors[st].x + max_dist_x) ++st;
-		// if (i - st > max_iter) st = i - max_iter;
-		for (j = i - 1; j >= st && j > i - BACKSEARCH; --j) {
+		if (i - st > max_iter) st = i - max_iter;
+		for (j = i - 1; j >= st; --j) {
 			int64_t dr = ri - a->anchors[j].x;
 			int32_t dq = qi - (int32_t)a->anchors[j].y, dd, sc, log_dd, gap_cost;
 			int32_t sidj = (a->anchors[j].y & MM_SEED_SEG_MASK) >> MM_SEED_SEG_SHIFT;
@@ -62,29 +76,33 @@ void chain_dp(int max_dist_x, int max_dist_y, int bw, float avg_qspan, int n_seg
 				else if (dr > dq || sidi != sidj) gap_cost = c_lin < c_log? c_lin : c_log;
 				else gap_cost = c_lin + (c_log>>1);
 			} else gap_cost = (int)(dd * .01 * avg_qspan) + (log_dd>>1);
-			// sc -= (int)((double)gap_cost * gap_scale + .499);
+			sc -= (int)((double)gap_cost * gap_scale + .499);
 			sc += ret->scores[j];
 			if (sc > max_f) {
 				max_f = sc, max_j = j;
-			}
+                if (n_skip > 0) --n_skip;
+			} else if (ret->targets[j] == i) {
+                if (++n_skip > max_skip) {
+                    break;
+                }
+            }
+            if (ret->parents[j] >= 0) ret->targets[ret->parents[j]] = i;
 		}
 		ret->scores[i] = max_f, ret->parents[i] = max_j;
+        ret->peak_scores[i] = max_j >= 0 && ret->peak_scores[max_j] > max_f ? ret->peak_scores[max_j] : max_f;
 	}
 }
 
-void host_chain_kernel(std::vector<call_t> &args, std::vector<return_t> &rets)
+void host_chain_kernel(std::vector<call_t> &args, std::vector<return_t> &rets, int numThreads)
 {
-    struct timespec start, end;
-    clock_gettime(CLOCK_BOOTTIME, &start);
-
-    for (size_t batch = 0; batch < args.size(); batch++) {
-        call_t* arg = &args[batch];
-        return_t* ret = &rets[batch];
-        // fprintf(stderr, "%lld\t%f\t%d\t%d\t%d\t%d\n", arg->n, arg->avg_qspan, arg->max_dist_x, arg->max_dist_y, arg->bw, arg->n_segs);
-        chain_dp(arg->max_dist_x, arg->max_dist_y, arg->bw, arg->avg_qspan, arg->n_segs, arg->n, arg, ret);
+    #pragma omp parallel num_threads(numThreads)
+    {
+        #pragma omp for schedule(dynamic)
+            for (size_t batch = 0; batch < args.size(); batch++) {
+                call_t* arg = &args[batch];
+                return_t* ret = &rets[batch];
+                // fprintf(stderr, "%lld\t%f\t%d\t%d\t%d\t%d\n", arg->n, arg->avg_qspan, arg->max_dist_x, arg->max_dist_y, arg->bw, arg->n_segs);
+                chain_dp(arg, ret);
+            }
     }
-
-    clock_gettime(CLOCK_BOOTTIME, &end);
-    fprintf(stderr, " ***** kernel with n: %ld took %f seconds to finish\n",
-            args.size(), ( end.tv_sec - start.tv_sec ) + ( end.tv_nsec - start.tv_nsec ) / 1E9);
 }

@@ -3,6 +3,6 @@
 
 #include "host_data.h"
 
-void host_chain_kernel(std::vector<call_t> &arg, std::vector<return_t> &ret);
+void host_chain_kernel(std::vector<call_t> &arg, std::vector<return_t> &ret, int numThreads);
 
 #endif // HOST_KERNEL_H
