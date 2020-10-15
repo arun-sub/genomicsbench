@@ -167,6 +167,14 @@ int ksw_extend2(int qlen, const uint8_t *query, int tlen, const uint8_t *target,
 
 #define MAX_LINE_LEN 2048
 
+void __parsec_roi_begin() {
+	printf("ROI Begin.");
+}
+
+void __parsec_roi_end() {
+	printf("ROI End.");
+}
+
 int main(int argc, char *argv[])
 {
 	int c, sa = 1, sb = 4, i, j, k;
@@ -233,7 +241,9 @@ int main(int argc, char *argv[])
 			ref_ar[i] = seq_nt4_table[(int)target[i]]; 
 		}
 		int score, qle, tle, gtle, gscore, max_off;
+		__parsec_roi_begin();
 		score = ksw_extend2(qlen, read_ar, tlen, ref_ar, 5, mat, gapo, gape, gapo, gape, w, 5, 100, h0, &qle, &tle, &gtle, &gscore, &max_off); 
+		__parsec_roi_end();
 		fprintf(fp_out, "%d,%d,%d,%d,%d,%d\n", score, qle, tle, gtle, gscore, max_off);
 		numLinesRead += 1;
 		free(read_ar);
