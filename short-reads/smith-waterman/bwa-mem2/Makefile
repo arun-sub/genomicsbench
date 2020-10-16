@@ -31,10 +31,11 @@
 
 EXE=		xeonbsw
 CXX=		g++
-CXXFLAGS=	-O3 -std=c++11 -fopenmp -mavx2 #-mtune=native -march=native
-CPPFLAGS=	-DSORT_PAIRS -DRDT -DENABLE_PREFETCH -DBWA_OTHER_ELE=0
+CXXFLAGS=	-DSORT_PAIRS -DRDT -O3 -std=c++11 -fopenmp -mavx2 #-mtune=native -march=native
+#CPPFLAGS=	-DSORT_PAIRS -DRDT -DENABLE_PREFETCH -DBWA_OTHER_ELE=0
+#CPPFLAGS=	-DENABLE_PREFETCH -DBWA_OTHER_ELE=0
 #BWAMEM2_PATH=../../../tools/bwa-mem2
-INCLUDES=	-I$(BWAMEM2_PATH)/src
+#INCLUDES=	-I$(BWAMEM2_PATH)/src
 #LIBS=		-L$(BWAMEM2_PATH) -fopenmp -lz -lbwa
 LIBS=		-fopenmp -lz
 

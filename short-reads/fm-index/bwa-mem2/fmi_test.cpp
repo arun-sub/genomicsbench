@@ -40,7 +40,8 @@ Authors: Vasimuddin Md <vasimuddin.md@intel.com>; Sanchit Misra <sanchit.misra@i
 #endif
 
 #define CLMUL 8 // 8 x 64 bit cache line
-#define QUERY_DB_SIZE 1280000000
+// #define QUERY_DB_SIZE 1280000000
+#define QUERY_DB_SIZE 2560000000
 int myrank, num_ranks;
 
 int main(int argc, char **argv) {

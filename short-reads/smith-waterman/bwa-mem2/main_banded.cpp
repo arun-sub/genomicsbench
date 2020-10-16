@@ -35,10 +35,9 @@ Authors: Vasimuddin Md <vasimuddin.md@intel.com>; Sanchit Misra <sanchit.misra@i
 #include <limits>
 #include <unistd.h>
 #include <omp.h>
+#include <fstream>
 #include "utils.h"
 #include "bandedSWA.h"
-//#include "bandedSWA.h"
-
 
 #define DEFAULT_MATCH 1
 #define DEFAULT_MISMATCH 4
@@ -47,20 +46,21 @@ Authors: Vasimuddin Md <vasimuddin.md@intel.com>; Sanchit Misra <sanchit.misra@i
 #define DEFAULT_AMBIG -1
 
 #undef MAX_SEQ_LEN_REF
-#define MAX_SEQ_LEN_REF 1024
+#define MAX_SEQ_LEN_REF 512
+#undef MAX_SEQ_LEN_QER
+#define MAX_SEQ_LEN_QER 256
 
 // #define MAX_NUM_PAIRS 1000
 // #define MATRIX_MIN_CUTOFF -100000000
 // #define LOW_INIT_VALUE (INT32_MIN/2)
 // #define AMBIG 52
 double freq = 2.6*1e9;
-int32_t w_match, w_mismatch, w_open, w_extend, w_ambig;
+int32_t w_match, w_mismatch, w_open, w_extend, w_ambig, numThreads = 1;
 uint64_t SW_cells;
 char *pairFileName;
 FILE *pairFile;
 int8_t h0 = 0;
 double clock_freq;
-int numThreads = 1;
 uint64_t prof[10][112], data, SW_cells2;
 
 void bwa_fill_scmat(int a, int b, int ambig, int8_t mat[25]) {
@@ -113,62 +113,65 @@ void parseCmdLine(int argc, char *argv[])
 		}
 	}
 	if(pairFlag == 0) {
-		printf("ERROR! pairFileName not specified.\n");
+		fprintf(stderr, "ERROR! pairFileName not specified.\n");
 		exit(EXIT_FAILURE);
 	}
 }
 
-int loadPairs(SeqPair *seqPairArray, uint8_t *seqBufRef, uint8_t* seqBufQer)
+// -------------------------------------------------------------------------
+// INPUT FILE FORMAT
+// -------------------------------------------------------------------------
+// Line 1: Seed score
+// Line 2: Reference string
+// Line 3: Query string
+// 
+// E.g:
+// 19
+// 01230123
+// 0123
+
+void loadPairs(SeqPair *seqPairArray, uint8_t *seqBufRef, uint8_t* seqBufQer, size_t numPairs)
 {
-	int32_t numPairs = 0;
-	while(numPairs < MAX_NUM_PAIRS_ALLOC) {
+	size_t numPairsRead = 0;
+	while (numPairsRead < numPairs) {
 		int32_t h0 = 0;
 		char temp[10];
 		fgets(temp, 10, pairFile);
 		sscanf(temp, "%d", &h0);
-		// printf("%d\n", h0);
-		// if(!fgets((char *)(seqBuf + numPairs * 2 * MAX_SEQ_LEN), MAX_SEQ_LEN, pairFile))
-		if(!fgets((char *)(seqBufRef + numPairs * MAX_SEQ_LEN_REF), MAX_SEQ_LEN_REF, pairFile)) {
-			printf("WARNING! fgets returned NULL in %s. Num Pairs : %d\n", pairFileName, numPairs);
+		if (!fgets((char *)(seqBufRef + numPairsRead * (int64_t)(MAX_SEQ_LEN_REF)), MAX_SEQ_LEN_REF, pairFile)) {
+			printf("WARNING! fgets returned NULL in %s. Num Pairs : %d\n", pairFileName, numPairsRead);
 			break;
-		}
-		//if(!fgets((char *)(seqBuf + (numPairs * 2 + 1) * MAX_SEQ_LEN), MAX_SEQ_LEN, pairFile))
-		if(!fgets((char *)(seqBufQer + numPairs * MAX_SEQ_LEN_QER), MAX_SEQ_LEN_QER, pairFile)) {
+        }
+		if (!fgets((char *)(seqBufQer + numPairsRead * (int64_t)(MAX_SEQ_LEN_QER)), MAX_SEQ_LEN_QER, pairFile)) {
 			printf("WARNING! Odd number of sequences in %s\n", pairFileName);
 			break;
-		}
-
+        }
 		SeqPair sp;
-		sp.id = numPairs;
-		// sp.seq1 = seqBuf + numPairs * 2 * MAX_SEQ_LEN;
-		// sp.seq2 = seqBuf + (numPairs * 2 + 1) * MAX_SEQ_LEN;
-		sp.len1 = strnlen((char *)(seqBufRef + numPairs * MAX_SEQ_LEN_REF), MAX_SEQ_LEN_REF) - 1;
-		sp.len2 = strnlen((char *)(seqBufQer + numPairs * MAX_SEQ_LEN_QER), MAX_SEQ_LEN_QER) - 1;
+		sp.id = numPairsRead;
+		sp.len1 = strnlen((char *)(seqBufRef + numPairsRead * MAX_SEQ_LEN_REF), MAX_SEQ_LEN_REF) - 1;
+		sp.len2 = strnlen((char *)(seqBufQer + numPairsRead * MAX_SEQ_LEN_QER), MAX_SEQ_LEN_QER) - 1;
+        if (sp.len1 <= 0 || sp.len2 <= 0) {
+            fprintf(stderr, "%d\n", numPairsRead);
+        }
+        assert(sp.len1 > 0);
+        assert(sp.len2 > 0);
 		sp.h0 = h0;
-		// sp.score = 0;
-
-		//uint8_t *seq1 = seqBuf + numPairs * 2 * MAX_SEQ_LEN;
-	//uint8_t *seq2 = seqBuf + (numPairs * 2 + 1) * MAX_SEQ_LEN;
-		uint8_t *seq1 = seqBufRef + numPairs * MAX_SEQ_LEN_REF;
-		uint8_t *seq2 = seqBufQer + numPairs * MAX_SEQ_LEN_QER;
-		sp.idr =  numPairs * MAX_SEQ_LEN_REF;
-		sp.idq =  numPairs * MAX_SEQ_LEN_QER;
-		
-		for (int l=0; l<sp.len1; l++)
+		uint8_t *seq1 = seqBufRef + numPairsRead * MAX_SEQ_LEN_REF;
+		uint8_t *seq2 = seqBufQer + numPairsRead * MAX_SEQ_LEN_QER;
+		sp.idr =  numPairsRead * MAX_SEQ_LEN_REF;
+		sp.idq =  numPairsRead * MAX_SEQ_LEN_QER;
+		for (int l = 0; l < sp.len1; l++) {
 			seq1[l] -= 48;
-		for (int l=0; l<sp.len2; l++)
+        }
+		for (int l = 0; l < sp.len2; l++) {
 			seq2[l] -= 48;
-
-		// sp.idr = sp.idq = 0;
+        }
 		sp.seqid = sp.regid = sp.score = sp.tle = sp.gtle = sp.qle = -1;
 		sp.gscore = sp.max_off = -1;
-		
-		seqPairArray[numPairs] = sp;
-		numPairs++;
+		seqPairArray[numPairsRead] = sp;
+		numPairsRead++;
 		// SW_cells += (sp.len1 * sp.len2);
 	}
-	// fclose(pairFile);
-	return numPairs;
 }
 // profiling stats
 uint64_t find_stats(uint64_t *val, int nt, double &min, double &max, double &avg) {
@@ -188,104 +191,78 @@ uint64_t find_stats(uint64_t *val, int nt, double &min, double &max, double &avg
 int main(int argc, char *argv[])
 {
 	if (argc < 3) {
-		printf("usage: <exec> -pairs <InSeqFile> -t <threads>!!\n");
+		fprintf(stderr, "usage: <exec> -pairs <InSeqFile> -t <threads>!!\n");
 		exit(EXIT_FAILURE);
 	}
 	
-	clock_freq = __rdtsc();
-	sleep(1);
-	clock_freq = __rdtsc() - clock_freq;
-	
 	parseCmdLine(argc, argv);
-	printf("Allocating memory...\n");
-	SeqPair *seqPairArray = (SeqPair *)_mm_malloc(MAX_NUM_PAIRS * sizeof(SeqPair), 64);
-	// OutScore *outScoreArray = (OutScore *)_mm_malloc(MAX_NUM_PAIRS * sizeof(OutScore), 64);
-	
+
 	pairFile = fopen(pairFileName, "r");	
-	if(pairFile == NULL) {
+	if (pairFile == NULL) {
 		fprintf(stderr, "Could not open file: %s\n", pairFileName);
 		exit(EXIT_FAILURE);
 	}
 
-	uint8_t *seqBufRef = (uint8_t *)_mm_malloc(MAX_SEQ_LEN_REF * MAX_NUM_PAIRS_ALLOC *
-			sizeof(int8_t), 64);
-	uint8_t *seqBufQer = (uint8_t *)_mm_malloc(MAX_SEQ_LEN_QER * MAX_NUM_PAIRS_ALLOC *
-			sizeof(int8_t), 64);
+    const int bufSize = 1024 * 1024;
+    char* buffer = (char*)malloc(bufSize * sizeof(char));
+    size_t numLines = 0;
+    size_t n;
+    while (n = fread(buffer, sizeof(char), bufSize, pairFile)) {
+        for (int i = 0; i < n; i++) {
+            if (buffer[i] == '\n') {
+                numLines++;
+            }
+        }
+    }
+    free(buffer);
 
-	int8_t mat[25];
+    // Reset file pointer back to the beginning
+    fseek(pairFile, 0L, SEEK_SET);
+
+    size_t numPairs = numLines / 3;
+    size_t roundNumPairs = ((numPairs + SIMD_WIDTH16 - 1) / SIMD_WIDTH16 ) * SIMD_WIDTH16;
+    printf("Number of input pairs: %ld\n", numPairs);
+
+    size_t memAlloc = roundNumPairs * (sizeof(SeqPair) + MAX_SEQ_LEN_QER * sizeof(int8_t) + MAX_SEQ_LEN_REF * sizeof(int8_t));
+	printf("Allocating %.3f GB memory for input buffers...\n", (memAlloc * 1.0)/ (1024 * 1024 * 1024));
+	SeqPair *seqPairArray = (SeqPair *)_mm_malloc(roundNumPairs * sizeof(SeqPair), 64);
+    uint8_t *seqBufQer = (uint8_t*) _mm_malloc(MAX_SEQ_LEN_QER * roundNumPairs * sizeof(int8_t), 64);
+    uint8_t *seqBufRef = (uint8_t*) _mm_malloc(MAX_SEQ_LEN_REF * roundNumPairs * sizeof(int8_t), 64);
+
+    int8_t mat[25];
 	bwa_fill_scmat(w_match, w_mismatch, w_ambig, mat);
 	int zdrop = 100, w = 100, end_bonus = 5;
-	
-	BandedPairWiseSW *bsw = new BandedPairWiseSW(w_open, w_extend, w_open, w_extend,
-			zdrop, end_bonus, mat,
-			w_match, w_mismatch, numThreads);
 
-	//int64_t endTick, pTotalTicks = 0;
+	// OutScore *outScoreArray = (OutScore *)_mm_malloc(MAX_NUM_PAIRS * sizeof(OutScore), 64);
+		
+    BandedPairWiseSW *bsw = new BandedPairWiseSW(w_open, w_extend, w_open, w_extend,
+                zdrop, end_bonus, mat,
+                w_match, w_mismatch, numThreads);
+
 	int64_t startTick, totalTicks = 0, readTim = 0;
-#if __AVX2__
-	int64_t myTicks = 0;
-#endif
-	// SW_cells = 0;
-	int32_t numPairs = 0, totalPairs = 0;
 	
 	uint64_t tim = __rdtsc();
 
-	numPairs = loadPairs(seqPairArray, seqBufRef, seqBufQer);
+	loadPairs(seqPairArray, seqBufRef, seqBufQer, numPairs);
 	readTim += __rdtsc() - tim;
-	totalPairs += numPairs;
-	
-	while(numPairs) {
-		//int i;
-		// for(i = 0; i < numPairs; i++)
-		// {
-		// 	SeqPair *p = seqPairArray + i;
-		// 	int qle, tle, gtle, gscore, max_off;
-		// 	int32_t h0 = p->h0;
 
-		// 	int score = bsw.scalarBandedSWA(p->len2, p->seq2, p->len1,
-		// 									p->seq1, w, h0, &qle, &tle,
-		// 									&gtle, &gscore, &max_off);		
-		// 	totalPairs++;
-		// }
-		startTick = __rdtsc();		
-		
-#if __AVX2__
-		// printf("Executing AVX2 vector code...\n");
-		uint64_t timM = __rdtsc();
-		// bsw->getScores8(seqPairArray, seqBufRef, seqBufQer, numPairs, 1, w);
-		bsw->getScores16(seqPairArray, seqBufRef, seqBufQer, numPairs, numThreads, w);
-		//bsw->scalarBandedSWAWrapper(seqPairArray, seqBufRef, seqBufQer, numPairs, 1, w);
-		myTicks += __rdtsc() - timM;
-#else
-		// printf("Executing scalar code...\n");
-		bsw->scalarBandedSWAWrapper(seqPairArray, seqBufRef, seqBufQer, numPairs, numThreads, w);
-#endif
-		totalTicks += __rdtsc() - startTick;
-		
-		uint64_t tim = __rdtsc();
-		numPairs = loadPairs(seqPairArray, seqBufRef, seqBufQer);
-		readTim += __rdtsc() - tim;
-		
-		totalPairs += numPairs;
-	}
-	//totalTicks += endTick - startTick;
-#if __AVX2__
-		printf("Executed AVX2 vector code...\n");
-#else
-		printf("Executed scalar code...\n");
-#endif
+    startTick = __rdtsc();
+    bsw->getScores16(seqPairArray, seqBufRef, seqBufQer, numPairs, numThreads, w);
+    totalTicks += __rdtsc() - startTick;
+
+
+    printf("Executed AVX2 vector code...\n");
 
 	tim = __rdtsc();
 	sleep(1);
 	freq = __rdtsc() - tim;
 	
 	printf("Processor freq: %0.2lf MHz\n", freq/1e6);
-	
-#if __AVX2__
+
 	//int64_t myTicks = bsw->getTicks();
 	printf("Read time = %0.2lf s\n", readTim/freq);
-	printf("Overall SW cycles = %ld, %0.2lf s\n", myTicks, myTicks*1.0/freq);
-	printf("Total Pairs processed: %d\n", totalPairs);
+	printf("Overall SW cycles = %ld, %0.2lf s\n", totalTicks, totalTicks * 1.0 / freq);
+	printf("Total Pairs processed: %d\n", numPairs);
 
 
 	// printf("SW cells(T)  = %ld\n", SW_cells);
@@ -308,18 +285,11 @@ int main(int argc, char *argv[])
 	// printf("Time taken for DP inner loop: %0.2lf\n", prof[DP1][0]*1.0/freq);
 	// printf("Time taken for DP loop lower part: %0.2lf\n", prof[DP2][0]*1.0/freq);	
 
-#else
-	// fprintf(stderr, "Processor is running @%0.2lf Mhz\n", clock_freq/1e6);
-	//printf("SW cycles = %ld\n", pwsw->getTicks());
-	// fprintf(stderr, "SW cycles = %ld, time = %0.6lf Sec\n",
-	// totalTicks, totalTicks*1.0/clock_freq);
-	// fprintf(stderr, "Total pairs computed: %d\n", totalPairs);
-	// fprintf(stderr, "Total cells computed: %ld\n", bsw->SW_cells);
-#endif
 	/**** free memory *****/
 	_mm_free(seqPairArray);
 	_mm_free(seqBufRef);
 	_mm_free(seqBufQer);
+    bsw->getTicks();
 	delete bsw;
 	
 	fclose(pairFile);
