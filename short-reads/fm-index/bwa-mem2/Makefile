@@ -38,8 +38,8 @@ CXXFLAGS=	-std=c++11 -fopenmp -mavx2 #-mtune=native -march=native
 #CPPFLAGS=	-DPRINT_OUTPUT -DENABLE_PREFETCH -DBWA_OTHER_ELE=0
 CPPFLAGS=	-DENABLE_PREFETCH -DBWA_OTHER_ELE=0
 BWAMEM2_PATH=../../../tools/bwa-mem2
-INCLUDES=	-I$(BWAMEM2_PATH)/src
-LIBS=		-L$(BWAMEM2_PATH) -fopenmp -lz -lbwa
+INCLUDES=	-I$(BWAMEM2_PATH)/src -I$(BWAMEM2_PATH)/ext/safestringlib/include
+LIBS=		-L$(BWAMEM2_PATH) -L$(BWAMEM2_PATH)/ext/safestringlib -lsafestring -fopenmp -lz -lbwa
 
 .PHONY:all clean depend
 .SUFFIXES:.cpp .o
