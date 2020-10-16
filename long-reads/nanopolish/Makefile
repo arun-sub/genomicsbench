@@ -1,9 +1,7 @@
 # dir
 DIR = ../../tools/nanopolish
-
-# Sub directories containing source code, except for the main programs
 SUBDIRS := src src/hmm src/thirdparty src/thirdparty/scrappie src/common src/alignment src/pore_model src/io
-
+SUBDIRS_INCLUDE = $(foreach dir, $(SUBDIRS), $(addprefix -I${DIR}/, $(SUBDIRS)))
 #
 # Set libraries, paths, flags and options
 #
@@ -12,13 +10,8 @@ SUBDIRS := src src/hmm src/thirdparty src/thirdparty/scrappie src/common src/ali
 LIBS = -lz      # libz is Zlib, a compression library which can do gzip, deflate, and a few other formats
 CXXFLAGS ?= -g -O0      # ?= means only if it's not set/
 CXXFLAGS += -std=c++11 -fopenmp -fsigned-char -D_FILE_OFFSET_BITS=64 #D_FILE_OFFSET_BITS=64 makes nanopolish work in 32 bit systems
-CFLAGS ?= -O3 -std=c99 -fsigned-char -D_FILE_OFFSET_BITS=64
 LDFLAGS ?=
 CXX ?= g++
-CC ?= gcc
-
-HDF5_VERSION ?= 1.10.4
-EIGEN_VERSION ?= 3.3.7
 
 # Check operating system, OSX doesn't have -lrt
 UNAME_S := $(shell uname -s)
@@ -34,7 +27,7 @@ LIBS += -ldl
 EIGEN_CHECK = ${DIR}/eigen/INSTALL
 EIGEN_INCLUDE = -I${DIR}/eigen/
 
-HTS_LIB = ${DIR}//htslib/libhts.a
+HTS_LIB = ${DIR}/htslib/libhts.a
 HTS_INCLUDE = -I${DIR}/htslib
 
 MINIMAP2_LIB = ${DIR}/minimap2/libminimap2.a
@@ -49,9 +42,6 @@ endif
 # Include the header-only fast5 library
 FAST5_INCLUDE = -I${DIR}/fast5/include
 
-# Include the src subdirectories
-NP_INCLUDE = $(addprefix -I${DIR}/, $(SUBDIRS))
-
 # Include the vtune lib
 VTUNE_HOME = /opt/intel/vtune_profiler_2020
 VTUNE_INCLUDE = -I$(VTUNE_HOME)/include
@@ -60,7 +50,7 @@ CPPFLAGS += $(VTUNE_INCLUDE)
 LIBS += $(VTUNE_LIB)
 
 # Add include flags
-CPPFLAGS += $(H5_INCLUDE) $(HTS_INCLUDE) $(MINIMAP2_INCLUDE) $(FAST5_INCLUDE) $(NP_INCLUDE) $(EIGEN_INCLUDE)
+CPPFLAGS += $(H5_INCLUDE) $(HTS_INCLUDE) $(MINIMAP2_INCLUDE) $(FAST5_INCLUDE) $(EIGEN_INCLUDE) ${SUBDIRS_INCLUDE}
 
 # Main programs to build
 RUN_ALIGN = run_align
@@ -73,9 +63,8 @@ all: depend $(RUN_ALIGN)
 #
 
 # Find the source files by searching subdirectories
-CPP_SRC := $(foreach dir, $(SUBDIRS), $(wildcard $(dir)/*.cpp))
-C_SRC := $(foreach dir, $(SUBDIRS), $(wildcard $(dir)/*.c))
-EXE_SRC = ${DIR}/src/main/nanopolish.cpp ${DIR}/src/test/nanopolish_test.cpp
+CPP_SRC := $(foreach dir, $(SUBDIRS), $(wildcard ${DIR}/$(dir)/*.cpp))
+C_SRC := $(foreach dir, $(SUBDIRS), $(wildcard ${DIR}$(dir)/*.c))
 
 # Automatically generated object names
 CPP_OBJ = $(CPP_SRC:.cpp=.o)
@@ -85,25 +74,18 @@ C_OBJ = $(C_SRC:.c=.o)
 .PHONY: depend
 depend: .depend
 
-.depend: $(CPP_SRC) $(C_SRC) $(EXE_SRC) $(H5_LIB) $(EIGEN_CHECK)
+.depend: $(CPP_SRC)
 	rm -f ./.depend
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -MM $(CPP_SRC) $(C_SRC) > ./.depend;
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -MM run_align.cpp > ./.depend;
 
 # Compile objects
 .cpp.o:
 	$(CXX) -o $@ -c $(CXXFLAGS) $(CPPFLAGS) -fPIC $<
 
-
-.c.o:
-	$(CC) -o $@ -c $(CFLAGS) $(CPPFLAGS) $(H5_INCLUDE) -fPIC $<
-
-$(RUN_ALIGN): src/run_align.o $(CPP_OBJ) $(C_OBJ) $(HTS_LIB) $(MINIMAP2_LIB) $(H5_LIB) $(EIGEN_CHECK)
+$(RUN_ALIGN): run_align.o $(HTS_LIB) $(MINIMAP2_LIB) $(H5_LIB) $(EIGEN_CHECK)
 	echo $(CPP_OBJ)
-	$(CXX) -o $@ $(CXXFLAGS) $(CPPFLAGS) -fPIC $< $(CPP_OBJ) $(C_OBJ) $(HTS_LIB) $(MINIMAP2_LIB) $(H5_LIB) $(LIBS) $(LDFLAGS)
-
-
-.PHONY: test
+	$(CXX) -o $@ $(CXXFLAGS) $(CPPFLAGS) -fPIC $< $(DIR)/libnanopolish.a $(HTS_LIB) $(MINIMAP2_LIB) $(H5_LIB) $(LIBS) $(LDFLAGS)
 
 .PHONY: clean
 clean:
-	rm -f $(RUN_ALIGN) $(CPP_OBJ) $(C_OBJ)
+	rm -f $(RUN_ALIGN)

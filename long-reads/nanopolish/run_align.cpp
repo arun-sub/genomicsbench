@@ -3,6 +3,7 @@
 #include <string>
 #include <algorithm>
 #include <ctime>
+#include <getopt.h>
 #include "nanopolish_common.h"
 #include "nanopolish_squiggle_read.h"
 #include "nanopolish_pore_model_set.h"
@@ -19,6 +20,26 @@ extern "C" {
 }
 
 #include <fast5.hpp>
+
+static const char *USAGE_MESSAGE =
+"  -p, --parameter                      name of parameter file\n"
+"  -r  --result                         name of result file\n";
+
+namespace opt
+{
+    std::string parameter_file;
+    std::string result_file;
+}
+
+static const char* shortopts = "p:r:";
+
+enum { OPT_HELP = 1 };
+
+static const struct option longopts[] = {
+    { "parameter",           required_argument, NULL, 'p' },
+    { "result",              required_argument, NULL, 'r' },
+    { NULL, 0, NULL, 0 }
+};
 
 #define event_kmer_to_band(ei, ki) (ei + 1) + (ki + 1)
 #define band_event_to_offset(bi, ei) band_lower_left[bi].event_idx - (ei)
@@ -83,7 +104,7 @@ static inline uint32_t get_kmer_rank(const char* str, uint32_t k) {
 }
 
 
-std::vector<AlignedPair> adaptive_banded_simple_event_align(size_t k, std::vector<SquiggleEvent> events, 
+std::vector<AlignedPair> adaptive_banded_simple_event_align_kernel(size_t k, std::vector<SquiggleEvent> events, 
                                     SquiggleScalings scalings, std::vector<PoreModelStateParams> states,
                                     std::string& sequence)
 {
@@ -359,10 +380,19 @@ std::vector<AlignedPair> adaptive_banded_simple_event_align(size_t k, std::vecto
     return out;
 }
 
-int main() {
+int main(int argc, char** argv) {
+    for (char c; (c = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1;) {
+        switch (c) {
+            case 'p': opt::parameter_file = optarg; break;
+            case 'r': opt::result_file = optarg; break;
+            case OPT_HELP:
+                std::cout << USAGE_MESSAGE;
+                exit(EXIT_SUCCESS);
+        }
+    }
 
     std::ifstream file1;
-    file1.open("align_parameter_nanopolish", std::fstream::binary);
+    file1.open(opt::parameter_file, std::fstream::binary);
 
     size_t k;
     SquiggleScalings scalings;
@@ -396,7 +426,7 @@ int main() {
 
     file1.close();
 
-    std::vector<AlignedPair> event_alignment_new = adaptive_banded_simple_event_align(k, events, scalings, states, sequence);
+    std::vector<AlignedPair> event_alignment_new = adaptive_banded_simple_event_align_kernel(k, events, scalings, states, sequence);
 
     std::vector<SquiggleEvent>().swap(events);
     std::vector<PoreModelStateParams>().swap(states);
@@ -405,7 +435,7 @@ int main() {
 
     std::ifstream file2;
     
-    file2.open("align_result_nanopolish", std::fstream::binary);
+    file2.open(opt::result_file, std::fstream::binary);
     AlignedPair event_alignment;
     uint32_t n_event_alignments;
     file2.read((char*)&n_event_alignments, sizeof(n_event_alignments));
