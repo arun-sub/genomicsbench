@@ -1,3 +1,4 @@
 venv3
 long-reads/basecalling/output
+long-reads/basecalling/data
 *.nfs*

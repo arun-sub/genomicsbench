@@ -1,0 +1,4 @@
+long-reads/basecalling/data/10/reads.fast5 filter=lfs diff=lfs merge=lfs -text
+long-reads/basecalling/data/100/reads.fast5 filter=lfs diff=lfs merge=lfs -text
+long-reads/basecalling/data/1000/reads.fast5 filter=lfs diff=lfs merge=lfs -text
+long-reads/basecalling/data/500/reads.fast5 filter=lfs diff=lfs merge=lfs -text
