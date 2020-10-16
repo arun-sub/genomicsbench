@@ -60,6 +60,7 @@ char *pairFileName;
 FILE *pairFile;
 int8_t h0 = 0;
 double clock_freq;
+int numThreads = 1;
 uint64_t prof[10][112], data, SW_cells2;
 
 void bwa_fill_scmat(int a, int b, int ambig, int8_t mat[25]) {
@@ -107,10 +108,13 @@ void parseCmdLine(int argc, char *argv[])
 		if(strcmp(argv[i], "-h0") == 0) {
 			h0 = atoi(argv[i + 1]);
 		}
+        if(strcmp(argv[i], "-t") == 0) {
+			numThreads = atoi(argv[i + 1]);
+		}
 	}
 	if(pairFlag == 0) {
 		printf("ERROR! pairFileName not specified.\n");
-		exit(0);
+		exit(EXIT_FAILURE);
 	}
 }
 
@@ -125,12 +129,12 @@ int loadPairs(SeqPair *seqPairArray, uint8_t *seqBufRef, uint8_t* seqBufQer)
 		// printf("%d\n", h0);
 		// if(!fgets((char *)(seqBuf + numPairs * 2 * MAX_SEQ_LEN), MAX_SEQ_LEN, pairFile))
 		if(!fgets((char *)(seqBufRef + numPairs * MAX_SEQ_LEN_REF), MAX_SEQ_LEN_REF, pairFile)) {
-			printf("ERROR! fgets returned NULL in %s. Num Pairs : %d\n", pairFileName, numPairs);
+			printf("WARNING! fgets returned NULL in %s. Num Pairs : %d\n", pairFileName, numPairs);
 			break;
 		}
 		//if(!fgets((char *)(seqBuf + (numPairs * 2 + 1) * MAX_SEQ_LEN), MAX_SEQ_LEN, pairFile))
 		if(!fgets((char *)(seqBufQer + numPairs * MAX_SEQ_LEN_QER), MAX_SEQ_LEN_QER, pairFile)) {
-			printf("ERROR! Odd number of sequences in %s\n", pairFileName);
+			printf("WARNING! Odd number of sequences in %s\n", pairFileName);
 			break;
 		}
 
@@ -184,8 +188,8 @@ uint64_t find_stats(uint64_t *val, int nt, double &min, double &max, double &avg
 int main(int argc, char *argv[])
 {
 	if (argc < 3) {
-		printf("usage: <exec> -pairs <InSeqFile>!!\n");
-		exit(0);
+		printf("usage: <exec> -pairs <InSeqFile> -t <threads>!!\n");
+		exit(EXIT_FAILURE);
 	}
 	
 	clock_freq = __rdtsc();
@@ -200,7 +204,7 @@ int main(int argc, char *argv[])
 	pairFile = fopen(pairFileName, "r");	
 	if(pairFile == NULL) {
 		fprintf(stderr, "Could not open file: %s\n", pairFileName);
-		exit(0);
+		exit(EXIT_FAILURE);
 	}
 
 	uint8_t *seqBufRef = (uint8_t *)_mm_malloc(MAX_SEQ_LEN_REF * MAX_NUM_PAIRS_ALLOC *
@@ -214,13 +218,12 @@ int main(int argc, char *argv[])
 	
 	BandedPairWiseSW *bsw = new BandedPairWiseSW(w_open, w_extend, w_open, w_extend,
 			zdrop, end_bonus, mat,
-			w_match, w_mismatch, 1);
+			w_match, w_mismatch, numThreads);
 
 	//int64_t endTick, pTotalTicks = 0;
 	int64_t startTick, totalTicks = 0, readTim = 0;
 #if __AVX2__
 	int64_t myTicks = 0;
-	int numThreads = 1;
 #endif
 	// SW_cells = 0;
 	int32_t numPairs = 0, totalPairs = 0;
@@ -250,12 +253,12 @@ int main(int argc, char *argv[])
 		// printf("Executing AVX2 vector code...\n");
 		uint64_t timM = __rdtsc();
 		// bsw->getScores8(seqPairArray, seqBufRef, seqBufQer, numPairs, 1, w);
-		bsw->getScores16(seqPairArray, seqBufRef, seqBufQer, numPairs, 1, w);
+		bsw->getScores16(seqPairArray, seqBufRef, seqBufQer, numPairs, numThreads, w);
 		//bsw->scalarBandedSWAWrapper(seqPairArray, seqBufRef, seqBufQer, numPairs, 1, w);
 		myTicks += __rdtsc() - timM;
 #else
 		// printf("Executing scalar code...\n");
-		bsw->scalarBandedSWAWrapper(seqPairArray, seqBufRef, seqBufQer, numPairs, 1, w);
+		bsw->scalarBandedSWAWrapper(seqPairArray, seqBufRef, seqBufQer, numPairs, numThreads, w);
 #endif
 		totalTicks += __rdtsc() - startTick;
 		

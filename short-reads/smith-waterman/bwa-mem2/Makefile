@@ -32,10 +32,11 @@
 EXE=		xeonbsw
 CXX=		g++
 CXXFLAGS=	-O3 -std=c++11 -fopenmp -mavx2 #-mtune=native -march=native
-CPPFLAGS=	-DENABLE_PREFETCH -DBWA_OTHER_ELE=0
-BWAMEM2_PATH=../../../tools/bwa-mem2
+CPPFLAGS=	-DSORT_PAIRS -DRDT -DENABLE_PREFETCH -DBWA_OTHER_ELE=0
+#BWAMEM2_PATH=../../../tools/bwa-mem2
 INCLUDES=	-I$(BWAMEM2_PATH)/src
-LIBS=		-L$(BWAMEM2_PATH) -fopenmp -lz -lbwa
+#LIBS=		-L$(BWAMEM2_PATH) -fopenmp -lz -lbwa
+LIBS=		-fopenmp -lz
 
 .PHONY:all clean depend
 .SUFFIXES:.cpp .o
@@ -45,7 +46,8 @@ LIBS=		-L$(BWAMEM2_PATH) -fopenmp -lz -lbwa
 
 all:$(EXE)
 
-xeonbsw:main_banded.o $(BWAMEM2_PATH)/libbwa.a
+#xeonbsw:main_banded.o bandedSWA.o $(BWAMEM2_PATH)/libbwa.a
+xeonbsw:main_banded.o bandedSWA.o
 	$(CXX) -o $@ $^ $(LIBS)
 
 clean:
@@ -53,4 +55,5 @@ clean:
 
 
 # DO NOT DELETE
-main_banded.o: $(BWAMEM2_PATH)/src/bandedSWA.h $(BWAMEM2_PATH)/src/macro.h $(BWAMEM2_PATH)/src/utils.h
+main_banded.o: bandedSWA.h macro.h utils.h
+bandedSWA.o: bandedSWA.h macro.h utils.h

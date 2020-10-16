@@ -51,3 +51,6 @@
 [submodule "tools/gatk"]
 	path = tools/gatk
 	url = https://github.com/arun-sub/gatk.git
+[submodule "short-reads/deBruijn"]
+	path = short-reads/deBruijn
+	url = https://github.com/arun-sub/deBruijn
