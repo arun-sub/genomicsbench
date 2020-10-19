@@ -13,6 +13,11 @@ typedef struct _plp_data {
 } _plp_data;
 typedef _plp_data *plp_data;
 
+typedef struct {
+    char region_string[1024];
+    plp_data pileup;
+} Batch;
+
 
 /** Format an array values as a comma seperate string
  *

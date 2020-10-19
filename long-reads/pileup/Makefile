@@ -1,6 +1,6 @@
 CC     = gcc
-LIBS = -Lhtslib -lz -lm -lbz2 -llzma -lpthread -lcurl -lcrypto
-CCFLAGS   = -g -Wall -pthread -fstack-protector-strong -D_FORTIFY_SOURCE=2 -fPIC -std=c99 -O3
+LIBS = -Lhtslib -lz -lm -lbz2 -llzma -lpthread -lcurl -lcrypto -fopenmp
+CCFLAGS   = -g -Wall -pthread -fstack-protector-strong -D_FORTIFY_SOURCE=2 -fPIC -std=c99 -O3 -fopenmp
 INC = -Ihtslib
 
 all: medaka_common.c medaka_counts.c medaka_bamiter.c

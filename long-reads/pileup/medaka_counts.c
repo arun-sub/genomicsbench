@@ -7,6 +7,9 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include "omp.h"
+#include "time.h"
+#include "sys/time.h"
 #include "htslib/sam.h"
 
 #include "khash.h"
@@ -469,18 +472,19 @@ plp_data calculate_pileup(
 
 // Demonstrates usage
 int main(int argc, char *argv[]) {
-    if(argc < 3) {
-        fprintf(stderr, "Usage %s <bam> <region>.\n", argv[0]);
+    if(argc < 4) {
+        fprintf(stderr, "Usage %s <bam> <region> <num_threads>\n", argv[0]);
         exit(1);
     }
     const char *bam_file = argv[1];
     const char *reg = argv[2];
+    int numThreads = atoi(argv[3]);
 
     size_t num_dtypes = 1;
     char **dtypes = NULL;
-    if (argc > 3) {
-        num_dtypes = argc - 3;
-        dtypes = &argv[3];
+    if (argc > 4) {
+        num_dtypes = argc - 4;
+        dtypes = &argv[4];
     }
     char tag_name[2] = "";
     int tag_value = 0;
@@ -489,12 +493,72 @@ int main(int argc, char *argv[]) {
     bool weibull_summation = false;
     const char* read_group = NULL;
 
-    plp_data pileup = calculate_pileup(
-        reg, bam_file, num_dtypes, dtypes,
-        num_homop, tag_name, tag_value, keep_missing,
-        weibull_summation, read_group);
-    print_pileup_data(pileup, num_dtypes, dtypes, num_homop);
-    fprintf(stdout, "pileup is length %zu, with buffer of %zu columns\n", pileup->n_cols, pileup->buffer_cols);
-    destroy_plp_data(pileup);
-    exit(0); 
+    kvec_t(Batch) batches;
+    kv_init(batches);
+    
+    // extract `chr`:`start`-`end` from `region`
+    //   (start is one-based and end-inclusive),
+    //   hts_parse_reg below sets return value to point
+    //   at ":", copy the input then set ":" to null terminator
+    //   to get `chr`.
+    int start, end;
+    char *chr = xalloc(strlen(reg) + 1, sizeof(char), "chr");
+    strcpy(chr, reg);
+    char *reg_chr = (char *) hts_parse_reg(chr, &start, &end);
+    // start and end now zero-based end exclusive
+    if (reg_chr) {
+        *reg_chr = '\0';
+    } else {
+        fprintf(stderr, "Failed to parse region: '%s'.\n", reg);
+    }
+
+    // create batches (or chunks in Medaka) of size 100kb
+    int i = 0;
+    const int chunk_len = 100000;
+    for (i = start; i < end; i += chunk_len) {
+        Batch b;
+        int chunk_beg = i;
+        int chunk_end = (i + chunk_len) < end ? i + chunk_len : end;
+        int numChars = snprintf(b.region_string, 1024, "%s:%d-%d", chr, chunk_beg, chunk_end);
+        assert(numChars < 1024);
+        b.region_string[numChars] = '\0';
+        // fprintf(stderr, "%s\n", b.region_string);
+        kv_push(Batch, batches, b);
+    }
+    free(chr);
+
+    #pragma omp parallel num_threads(numThreads)
+    {
+        int tid = omp_get_thread_num();
+        if (tid == 0) {
+            fprintf(stderr, "Running %d batches with threads: %d\n", batches.n, numThreads);
+        }
+    }
+
+    struct timeval start_time, end_time;
+    double runtime = 0;
+    gettimeofday(&start_time, NULL);
+    // process batches in parallel
+    #pragma omp parallel num_threads(numThreads)
+    {
+        #pragma omp for schedule(dynamic, 1)
+            for (i = 0; i < batches.n; i++) {
+                batches.a[i].pileup = calculate_pileup(
+                                        batches.a[i].region_string, bam_file, num_dtypes, dtypes,
+                                        num_homop, tag_name, tag_value, keep_missing,
+                                        weibull_summation, read_group);
+            }
+    }
+    gettimeofday(&end_time, NULL);
+    runtime += (end_time.tv_sec - start_time.tv_sec)*1e6 + end_time.tv_usec - start_time.tv_usec;
+
+    // print pileup and clean up
+    for (i = 0; i < batches.n; i++) {
+        print_pileup_data(batches.a[i].pileup, num_dtypes, dtypes, num_homop);
+        fprintf(stdout, "pileup is length %zu, with buffer of %zu columns\n", batches.a[i].pileup->n_cols, batches.a[i].pileup->buffer_cols);
+        destroy_plp_data(batches.a[i].pileup);
+    }
+    kv_destroy(batches);
+    fprintf(stderr, "Kernel runtime: %.2f s\n", runtime*1e-6);
+    return 0;
 }
