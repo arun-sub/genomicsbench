@@ -54,3 +54,6 @@
 [submodule "tools/bonito"]
 	path = tools/bonito
 	url = https://github.com/TimD1/bonito.git
+[submodule "short-reads/deBruijn"]
+	path = short-reads/deBruijn
+	url = https://github.com/arun-sub/deBruijn.git
