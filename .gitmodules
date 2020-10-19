@@ -41,7 +41,7 @@
 	url = https://github.com/arun-sub/gwas-speedup.git
 [submodule "tools/medaka"]
 	path = tools/medaka
-	url = https://github.com/Yufeng98/medaka.git
+	url = https://github.com/arun-sub/medaka.git
 [submodule "tools/Platypus"]
 	path = tools/Platypus
 	url = https://github.com/arun-sub/Platypus.git
@@ -57,3 +57,6 @@
 [submodule "short-reads/deBruijn"]
 	path = short-reads/deBruijn
 	url = https://github.com/arun-sub/deBruijn.git
+[submodule "long-reads/pileup/htslib"]
+	path = long-reads/pileup/htslib
+	url = https://github.com/arun-sub/htslib.git
