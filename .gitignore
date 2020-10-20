@@ -5,3 +5,6 @@ long-reads/basecalling/output
 *.txt
 *.o
 *.log
+*.out
+*.csv
+*.conf
