@@ -60,3 +60,6 @@
 [submodule "long-reads/pileup/htslib"]
 	path = long-reads/pileup/htslib
 	url = https://github.com/arun-sub/htslib.git
+[submodule "tools/Flye"]
+	path = tools/Flye
+	url = https://github.com/arun-sub/Flye.git
