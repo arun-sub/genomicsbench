@@ -23,9 +23,9 @@ DEPS = $(OBJECTS:.o=.d)
 
 # flags #
 COMPILE_FLAGS = -std=c++11 -Wall -Wextra -g -O3 -fopenmp -xAVX2 -axAVX2
-INCLUDES = -I /usr/local/include -I../../../minimap2
+INCLUDES = -I /usr/local/include -I../../../tools/minimap2
 # Space-separated pkg-config libraries used by this project
-LIBS = -L../../../minimap2 -lminimap2
+LIBS = -L../../../tools/minimap2 -lminimap2
 
 .PHONY: default_target
 default_target: release
