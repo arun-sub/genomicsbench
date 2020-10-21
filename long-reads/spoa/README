@@ -1,0 +1,10 @@
+Pre-requisites:
+gcc-8
+scl enable devtoolset-8 bash
+Compile SPOA library: cd ../../tools/spoa; mkdir build; cd build; cmake -DCMAKE_BUILD_TYPE=Release ..
+
+====
+Compile kernel: make
+Usage: ./msa_spoa_omp -s <input.fasta> -t <num_threads> > cons.fa
+
+E.g: ./msa_spoa_omp -s /y/arunsub/punnet_data/inputs/poa/input.fasta -t 4 > /y/arunsub/punnet_data/inputs/poa/cons.fa
