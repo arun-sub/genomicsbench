@@ -188,6 +188,28 @@ uint64_t find_stats(uint64_t *val, int nt, double &min, double &max, double &avg
 	return 1;
 }
 
+const char *__parsec_roi_begin(const char *s, int *beg, int *end)
+{
+    char *hyphen;
+    const char *colon = strrchr(s, ':');
+    if (colon == NULL) {
+        *beg = 0; *end = 0x7fffffff;
+        return s + strlen(s);
+    }
+    return NULL;
+}
+
+const char *__parsec_roi_end(const char *s, int *beg, int *end)
+{
+    char *hyphen;
+    const char *colon = strrchr(s, ':');
+    if (colon == NULL) {
+        *beg = 0; *end = 0x7fffffff;
+        return s + strlen(s);
+    }
+    return NULL;
+}
+
 int main(int argc, char *argv[])
 {
 	if (argc < 3) {
@@ -246,9 +268,14 @@ int main(int argc, char *argv[])
 	loadPairs(seqPairArray, seqBufRef, seqBufQer, numPairs);
 	readTim += __rdtsc() - tim;
 
+	const char *roi_q;
+    int roi_i, roi_j;
+    char roi_s[20] = "chr22:0-5";
+    roi_q = __parsec_roi_begin(roi_s, &roi_i, &roi_j);
     startTick = __rdtsc();
     bsw->getScores16(seqPairArray, seqBufRef, seqBufQer, numPairs, numThreads, w);
     totalTicks += __rdtsc() - startTick;
+	roi_q = __parsec_roi_end(roi_s, &roi_i, &roi_j);
 
 
     printf("Executed AVX2 vector code...\n");

@@ -44,6 +44,28 @@ Authors: Vasimuddin Md <vasimuddin.md@intel.com>; Sanchit Misra <sanchit.misra@i
 #define QUERY_DB_SIZE 2560000000
 int myrank, num_ranks;
 
+const char *__parsec_roi_begin(const char *s, int *beg, int *end)
+{
+    char *hyphen;
+    const char *colon = strrchr(s, ':');
+    if (colon == NULL) {
+        *beg = 0; *end = 0x7fffffff;
+        return s + strlen(s);
+    }
+    return NULL;
+}
+
+const char *__parsec_roi_end(const char *s, int *beg, int *end)
+{
+    char *hyphen;
+    const char *colon = strrchr(s, ':');
+    if (colon == NULL) {
+        *beg = 0; *end = 0x7fffffff;
+        return s + strlen(s);
+    }
+    return NULL;
+}
+
 int main(int argc, char **argv) {
 #ifdef VTUNE_ANALYSIS
     __itt_pause();
@@ -213,6 +235,10 @@ int main(int argc, char **argv) {
                 query_pos_array[CLMUL * tid] = (int16_t *)realloc(query_pos_array[CLMUL * tid], matchArrayAlloc * sizeof(int16_t));
             }
             int64_t num_smem1 = 0, num_smem2 = 0, num_smem3 = 0;
+            const char *roi_q;
+            int roi_i, roi_j;
+            char roi_s[20] = "chr22:0-5";
+            roi_q = __parsec_roi_begin(roi_s, &roi_i, &roi_j);
             fmiSearch->getSMEMsAllPosOneThread(enc_qdb + i * max_readlength,
                     min_intv_array[CLMUL * tid],
                     rid_array[CLMUL * tid],
@@ -274,6 +300,7 @@ int main(int argc, char **argv) {
                     batch_count,
                     max_readlength,
                     1);
+            roi_q = __parsec_roi_end(roi_s, &roi_i, &roi_j);
             myTotalSmems += totalSmem; 
             int64_t et1 = __rdtsc();
             workTicks[CLMUL * tid] += (et1 - st1);

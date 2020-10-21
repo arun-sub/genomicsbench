@@ -152,6 +152,28 @@ vector<Batch> read_testfile(string filename) {
     return batches;
 }
 
+const char *__parsec_roi_begin(const char *s, int *beg, int *end)
+{
+    char *hyphen;
+    const char *colon = strrchr(s, ':');
+    if (colon == NULL) {
+        *beg = 0; *end = 0x7fffffff;
+        return s + strlen(s);
+    }
+    return NULL;
+}
+
+const char *__parsec_roi_end(const char *s, int *beg, int *end)
+{
+    char *hyphen;
+    const char *colon = strrchr(s, ':');
+    if (colon == NULL) {
+        *beg = 0; *end = 0x7fffffff;
+        return s + strlen(s);
+    }
+    return NULL;
+}
+
 int main(int argc, char** argv) {
 
     for (char c; (c = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1;) {
@@ -185,7 +207,10 @@ int main(int argc, char** argv) {
             printf("Running %d threads\n", opt::nThreads);
         }
     }
-
+    const char *roi_q;
+    int roi_i, roi_j;
+    char roi_s[20] = "chr22:0-5";
+    roi_q = __parsec_roi_begin(roi_s, &roi_i, &roi_j);
     while (opt::loop) {
         #pragma omp parallel num_threads(opt::nThreads)
         {
@@ -213,6 +238,7 @@ int main(int argc, char** argv) {
         }
         opt::loop--;
     }
+    roi_q = __parsec_roi_end(roi_s, &roi_i, &roi_j);
 
     for (int i = 0; i < batches.size(); i++) {
 #ifdef PRINT_OUTPUT

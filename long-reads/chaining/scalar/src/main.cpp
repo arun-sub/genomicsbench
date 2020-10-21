@@ -4,6 +4,7 @@
 #include <sys/time.h>
 #include <getopt.h>
 #include <string>
+#include <string.h>
 #include <iostream>
 #include "omp.h"
 #include "host_data_io.h"
@@ -27,6 +28,28 @@ void help() {
         "            number of CPU threads\n"
         "        -h \n"
         "            prints the usage\n";
+}
+
+const char *__parsec_roi_begin(const char *s, int *beg, int *end)
+{
+    char *hyphen;
+    const char *colon = strrchr(s, ':');
+    if (colon == NULL) {
+        *beg = 0; *end = 0x7fffffff;
+        return s + strlen(s);
+    }
+    return NULL;
+}
+
+const char *__parsec_roi_end(const char *s, int *beg, int *end)
+{
+    char *hyphen;
+    const char *colon = strrchr(s, ':');
+    if (colon == NULL) {
+        *beg = 0; *end = 0x7fffffff;
+        return s + strlen(s);
+    }
+    return NULL;
 }
 
 
@@ -78,9 +101,14 @@ int main(int argc, char **argv) {
     struct timeval start_time, end_time;
     double runtime = 0;
 
+    const char *roi_q;
+    int roi_i, roi_j;
+    char roi_s[20] = "chr22:0-5";
+    roi_q = __parsec_roi_begin(roi_s, &roi_i, &roi_j);
     gettimeofday(&start_time, NULL);
     host_chain_kernel(calls, rets, numThreads);
     gettimeofday(&end_time, NULL);
+    roi_q = __parsec_roi_end(roi_s, &roi_i, &roi_j);
 
     runtime += (end_time.tv_sec - start_time.tv_sec) * 1e6 + (end_time.tv_usec - start_time.tv_usec);
     
