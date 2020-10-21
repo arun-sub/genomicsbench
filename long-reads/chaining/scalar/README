@@ -1,4 +1,7 @@
+Prerequisites:
+Compile minimap2 in tools: cd ../../../tools/minimap2; make
 export LD_LIBRARY_PATH=/opt/intel/compilers_and_libraries_2020.0.166/linux/compiler/lib/intel64_lin/:$LD_LIBRARY_PATH
 source ~/.bashrc
 
+Compile chaining kernel: make
 Command line: ./kernel <in-1k.txt> <out-kernel-1k.txt>
