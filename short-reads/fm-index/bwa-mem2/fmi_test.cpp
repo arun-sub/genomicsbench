@@ -46,7 +46,6 @@ int myrank, num_ranks;
 
 const char *__parsec_roi_begin(const char *s, int *beg, int *end)
 {
-    char *hyphen;
     const char *colon = strrchr(s, ':');
     if (colon == NULL) {
         *beg = 0; *end = 0x7fffffff;
@@ -57,7 +56,6 @@ const char *__parsec_roi_begin(const char *s, int *beg, int *end)
 
 const char *__parsec_roi_end(const char *s, int *beg, int *end)
 {
-    char *hyphen;
     const char *colon = strrchr(s, ':');
     if (colon == NULL) {
         *beg = 0; *end = 0x7fffffff;
