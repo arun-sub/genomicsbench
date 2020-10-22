@@ -1,4 +1,5 @@
-CXX = icpc
+#CXX = icpc
+CXX = g++
 
 # path #
 SRC_PATH = src
@@ -22,7 +23,8 @@ OBJECTS = $(SOURCES:$(SRC_PATH)/%.$(SRC_EXT)=$(BUILD_PATH)/%.o)
 DEPS = $(OBJECTS:.o=.d)
 
 # flags #
-COMPILE_FLAGS = -std=c++11 -Wall -Wextra -g -O3 -fopenmp -xAVX2 -axAVX2
+#COMPILE_FLAGS = -std=c++11 -Wall -Wextra -g -O3 -fopenmp -xAVX2 -axAVX2
+COMPILE_FLAGS = -std=c++11 -Wall -Wextra -g -O3 -fopenmp -mavx2
 INCLUDES = -I /usr/local/include -I../../../tools/minimap2
 # Space-separated pkg-config libraries used by this project
 LIBS = -L../../../tools/minimap2 -lminimap2
@@ -59,7 +61,8 @@ all: $(BIN_PATH)/$(BIN_NAME)
 # Creation of the executable
 $(BIN_PATH)/$(BIN_NAME): $(OBJECTS)
 	@echo "Linking: $@"
-	$(CXX) -O3 -fopenmp -xAVX2 -axAVX2 $(OBJECTS) -o $@
+	#$(CXX) -O3 -fopenmp -xAVX2 -axAVX2 $(OBJECTS) -o $@
+	$(CXX) -O3 -fopenmp -mavx2 $(OBJECTS) -o $@
 
 # Add dependency files, if they exist
 -include $(DEPS)
