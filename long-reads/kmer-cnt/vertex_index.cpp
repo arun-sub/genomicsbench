@@ -415,8 +415,15 @@ void VertexIndex::buildIndexMinimizers(int minCoverage, int wndLen)
 							  [](ReadVector& rv){++rv.capacity;}, defVec);
 		}
 	};
-	processInParallel(allReads, initializeIndex, 
+	if (Parameters::get().numThreads == 1) {
+		for (const auto& read : allReads) {
+			initializeIndex(read);
+		}
+	}
+	else {
+		processInParallel(allReads, initializeIndex, 
 					  Parameters::get().numThreads, _outputProgress);
+	}
 
 	this->filterFrequentKmers(minCoverage, (float)Config::get("repeat_kmer_rate"));
 	this->allocateIndexMemory();
@@ -456,8 +463,15 @@ void VertexIndex::buildIndexMinimizers(int minCoverage, int wndLen)
 				});
 		}
 	};
-	processInParallel(allReads, indexUpdate, 
+	if (Parameters::get().numThreads == 1) {
+		for (const auto& read: allReads) {
+			indexUpdate(read);
+		}
+	}
+	else {
+		processInParallel(allReads, indexUpdate, 
 					  Parameters::get().numThreads, _outputProgress);
+	}
 
 	Logger::get().debug() << "Sorting k-mer index";
 	for (const auto& kmerVec : _kmerIndex.lock_table())
@@ -561,7 +575,14 @@ void KmerCounter::count(bool useFlatCounter)
 	{
 		allReads.push_back(seq.id);
 	}
-	processInParallel(allReads, readUpdate, Parameters::get().numThreads, _outputProgress);
+	if (Parameters::get().numThreads == 1) {
+		for (const auto& readId : allReads) {
+			readUpdate(readId);
+		}
+	}
+	else {
+		processInParallel(allReads, readUpdate, Parameters::get().numThreads, _outputProgress);
+	}
 
 	Logger::get().debug() << "Updating k-mer histogram";
 	if (_useFlatCounter)
