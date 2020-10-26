@@ -35,13 +35,15 @@ Authors: Vasimuddin Md <vasimuddin.md@intel.com>; Sanchit Misra <sanchit.misra@i
 #include "bwa.h"
 #include "FMI_search.h"
 
+#define VTUNE_ANALYSIS 1
+
 #ifdef VTUNE_ANALYSIS
-#include <ittnotify.h>
+    #include <ittnotify.h>
 #endif
 
 #define CLMUL 8 // 8 x 64 bit cache line
 // #define QUERY_DB_SIZE 1280000000
-#define QUERY_DB_SIZE 2560000000
+#define QUERY_DB_SIZE 2560000000L
 int myrank, num_ranks;
 
 int main(int argc, char **argv) {
@@ -92,7 +94,7 @@ int main(int argc, char **argv) {
     assert(numReads > 0);
     assert(numReads * max_readlength < QUERY_DB_SIZE);
     printf("numReads = %d, max_readlength = %d, min_readlength = %d\n", numReads, max_readlength, min_readlength);
-    uint8_t *enc_qdb=(uint8_t *)malloc(numReads * max_readlength * sizeof(uint8_t));
+    uint8_t *enc_qdb=(uint8_t *)malloc((int64_t)numReads * max_readlength * sizeof(uint8_t));
 
     int64_t cind,st;
 #if 0
@@ -187,7 +189,7 @@ int main(int argc, char **argv) {
         int64_t myTotalSmems = 0;
         int64_t startTick = __rdtsc();
 
-#pragma omp for schedule(dynamic)
+#pragma omp for schedule(dynamic, 1)
         for(i = 0; i < numReads; i += batch_size)
         {
             int64_t st1 = __rdtsc();
@@ -280,7 +282,7 @@ int main(int argc, char **argv) {
         }
 
         int64_t endTick = __rdtsc();
-        printf("%d] %ld ticks, workTicks = %ld\n", tid, endTick - startTick, workTicks[tid]);
+        printf("%d] %ld ticks, workTicks = %ld\n", tid, endTick - startTick, workTicks[CLMUL * tid]);
     }
 
     endTick = __rdtsc();
@@ -291,8 +293,8 @@ int main(int argc, char **argv) {
     int64_t maxTicks = 0;
     for(i = 0; i < numthreads; i++)
     {
-        sumTicks += workTicks[i];
-        if(workTicks[i] > maxTicks) maxTicks = workTicks[i];
+        sumTicks += workTicks[CLMUL * i];
+        if(workTicks[CLMUL * i] > maxTicks) maxTicks = workTicks[CLMUL * i];
     }
     double avgTicks = (sumTicks * 1.0) / numthreads;
     printf("avgTicks = %lf, maxTicks = %ld, load imbalance = %lf\n", avgTicks, maxTicks, maxTicks/avgTicks);

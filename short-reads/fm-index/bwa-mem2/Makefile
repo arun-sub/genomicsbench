@@ -31,15 +31,16 @@
 
 #EXE=		fmi_test smem2_test bwt_seed_strategy_test sa2ref_test xeonbsw
 EXE=		fmi_test
-#CXX=		icpc
-CXX=		g++
+CXX=		icpc
+#CXX=		g++
+VTUNE_HOME= /opt/intel/vtune_profiler
 
 CXXFLAGS=	-std=c++11 -fopenmp -mavx2 #-mtune=native -march=native
 #CPPFLAGS=	-DPRINT_OUTPUT -DENABLE_PREFETCH -DBWA_OTHER_ELE=0
 CPPFLAGS=	-DENABLE_PREFETCH -DBWA_OTHER_ELE=0
 BWAMEM2_PATH=../../../tools/bwa-mem2
-INCLUDES=	-I$(BWAMEM2_PATH)/src -I$(BWAMEM2_PATH)/ext/safestringlib/include
-LIBS=		-L$(BWAMEM2_PATH) -L$(BWAMEM2_PATH)/ext/safestringlib -lsafestring -fopenmp -lz -lbwa
+INCLUDES=	-I$(BWAMEM2_PATH)/src -I$(BWAMEM2_PATH)/ext/safestringlib/include -I${VTUNE_HOME}/include
+LIBS=		-L$(BWAMEM2_PATH) -L$(BWAMEM2_PATH)/ext/safestringlib -lsafestring -L${VTUNE_HOME}/lib64 -littnotify -fopenmp -lz -lbwa
 
 .PHONY:all clean depend
 .SUFFIXES:.cpp .o
