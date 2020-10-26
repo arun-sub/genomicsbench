@@ -583,7 +583,7 @@ void KmerCounter::count(bool useFlatCounter)
 	else {
 		processInParallel(allReads, readUpdate, Parameters::get().numThreads, _outputProgress);
 	}
-
+    /*
 	Logger::get().debug() << "Updating k-mer histogram";
 	if (_useFlatCounter)
 	{
@@ -602,6 +602,7 @@ void KmerCounter::count(bool useFlatCounter)
 			_kmerDistribution[kmer.second] += 1;
 		}
 	}
+    */
 
 	//Logger::get().debug() << "After counter: " 
 	//	<< getPeakRSS() / 1024 / 1024 / 1024 << " Gb";

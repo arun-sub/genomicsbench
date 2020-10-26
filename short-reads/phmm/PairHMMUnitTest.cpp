@@ -31,17 +31,30 @@
 #include <vector>
 #include <string.h>
 #include <xmmintrin.h>
+#include <algorithm>
+#include <functional>
 #include "pairhmm_common.h"
 
 #include "PairHMMUnitTest.h"
 #include "shacc_pairhmm.h"
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <time.h>
+
+#define VTUNE_ANALYSIS 1
+
+#ifdef VTUNE_ANALYSIS
+    #include <ittnotify.h>
+#endif
 
 using namespace std;
 using namespace shacc_pairhmm;
 
-#define PRINT_OUTPUT
+// #define PRINT_OUTPUT
 #define MAX_BATCHES 1000000
 #define MAX_BATCH_SIZE 50000
+
+// #define ENABLE_SORT 1
 
 long g_total_cells = 0;
 
@@ -144,8 +157,11 @@ vector<Batch> read_testfile(string filename) {
     }
 
     vector<Batch> batches;
+    fprintf(stderr, "size of 1 batch: %d\n", sizeof(Batch));
+    int count = 0;
     while (!is->eof()) {
         Batch batch = read_batch(*is);
+        batch.id = count++;
         batches.push_back(batch);
     }
 
@@ -153,7 +169,13 @@ vector<Batch> read_testfile(string filename) {
 }
 
 int main(int argc, char** argv) {
-
+#ifdef VTUNE_ANALYSIS
+    __itt_pause();
+#endif
+    if (argc == 1) {
+        std::cout << USAGE_MESSAGE;
+        exit(EXIT_FAILURE);
+    }
     for (char c; (c = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1;) {
         switch (c) {
             case 'f': opt::testfile = optarg; break;
@@ -186,7 +208,19 @@ int main(int argc, char** argv) {
         }
     }
 
+    struct timeval start_time, end_time;
+    double runtime = 0;
+
+    gettimeofday(&start_time, NULL);
+
+#ifdef VTUNE_ANALYSIS
+    __itt_resume();
+#endif
     while (opt::loop) {
+        #ifdef ENABLE_SORT
+            std::sort(batches.begin(), batches.end(), SortByCells());
+        #endif
+
         #pragma omp parallel num_threads(opt::nThreads)
         {
             int tid = omp_get_thread_num();
@@ -212,7 +246,17 @@ int main(int argc, char** argv) {
                 }
         }
         opt::loop--;
+
+        #ifdef ENABLE_SORT
+            std::sort(batches.begin(), batches.end(), SortById());
+        #endif
     }
+#ifdef VTUNE_ANALYSIS
+    __itt_pause();
+#endif
+
+    gettimeofday(&end_time, NULL);
+    runtime += (end_time.tv_sec - start_time.tv_sec)*1e6 + end_time.tv_usec - start_time.tv_usec;
 
     for (int i = 0; i < batches.size(); i++) {
 #ifdef PRINT_OUTPUT
@@ -226,6 +270,6 @@ int main(int argc, char** argv) {
         _mm_free(batches[i].results);
     }
     _mm_free(testcases);
-    printf("\nPairHMM completed.\n");
+    printf("\nPairHMM completed. Kernel runtime: %.2f sec\n", runtime*1e-6);
 
 }

@@ -19,6 +19,12 @@
 #include "spoa/graph.hpp"
 #include "spoa/alignment_engine.hpp"
 
+#define VTUNE_ANALYSIS 1
+
+#ifdef VTUNE_ANALYSIS
+    #include <ittnotify.h>
+#endif
+
 using namespace std;
 using Alignment = std::vector<std::pair<std::int32_t, std::int32_t>>;
 
@@ -116,6 +122,9 @@ void help() {
 }
 
 int main(int argc, char** argv) {
+#ifdef VTUNE_ANALYSIS
+    __itt_pause();
+#endif
     string seq_file = "seq.fa";
 
     std::uint8_t algorithm = 1;
@@ -165,10 +174,11 @@ int main(int argc, char** argv) {
 
     vector<Batch> batches;
 
-    struct timeval start_time, end_time;
+    struct timeval start_time, end_time, t_start, t_end;
     double runtime = 0; int seq_i; string seq;
     double realtime = 0, real_start, real_end;
-  
+    double graphCreationTime = 0, alignTime = 0, addToGraphTime = 0, generateConsensusTime = 0;
+
 #pragma omp parallel num_threads(numThreads) 
 {
     int tid = omp_get_thread_num();
@@ -181,20 +191,38 @@ int main(int argc, char** argv) {
 
     gettimeofday(&start_time, NULL); real_start = get_realtime();
 
+#ifdef VTUNE_ANALYSIS
+    __itt_resume();
+#endif
 #pragma omp parallel num_threads(numThreads)
 {
     int tid = omp_get_thread_num();
-    #pragma omp for schedule(dynamic)
+    #pragma omp for schedule(dynamic, 1)
         for (int i = 0; i < batches.size(); i++) {
+            // gettimeofday(&t_start, NULL);
             auto graph = spoa::createGraph();
+            // gettimeofday(&t_end, NULL);
+            // graphCreationTime += (t_end.tv_sec - t_start.tv_sec)*1e6 + t_end.tv_usec - t_start.tv_usec;
             for (int j = 0; j < batches[i].seqs.size(); j++) {
+                // gettimeofday(&t_start, NULL);
                 auto alignment = alignment_engine[tid]->align(batches[i].seqs[j], graph);
+                // gettimeofday(&t_end, NULL);
+                // alignTime += (t_end.tv_sec - t_start.tv_sec)*1e6 + t_end.tv_usec - t_start.tv_usec;
+
+                // gettimeofday(&t_start, NULL);
                 graph->add_alignment(alignment, batches[i].seqs[j]);
+                // gettimeofday(&t_end, NULL);
+                // addToGraphTime += (t_end.tv_sec - t_start.tv_sec)*1e6 + t_end.tv_usec - t_start.tv_usec;
             }
+            // gettimeofday(&t_start, NULL);
             batches[i].consensus_seq = graph->generate_consensus();
+            // gettimeofday(&t_end, NULL);
+            // generateConsensusTime += (t_end.tv_sec - t_start.tv_sec)*1e6 + t_end.tv_usec - t_start.tv_usec;
         }   
 }
-
+#ifdef VTUNE_ANALYSIS
+    __itt_pause();
+#endif
     gettimeofday(&end_time, NULL); real_end = get_realtime();
     runtime += (end_time.tv_sec - start_time.tv_sec)*1e6 + end_time.tv_usec - start_time.tv_usec;
     realtime += (real_end-real_start);
@@ -206,7 +234,7 @@ int main(int argc, char** argv) {
     }
 #endif
 
-    fprintf(stderr, "%.2f %.2f %.3f \n", runtime*1e-6, realtime*1e-6, peakrss()/1024.0/1024.0);
+    fprintf(stderr, "Runtime: %.2f, GraphCreate: %.2f, Align: %.2f, AddSeqGraph: %.2f, Consensus %.2f %.2f %.3f \n", runtime*1e-6, graphCreationTime*1e-6, alignTime*1e-6, addToGraphTime*1e-6, generateConsensusTime*1e-6, realtime*1e-6, peakrss()/1024.0/1024.0);
 
     fp_seq.close();
     return 0;

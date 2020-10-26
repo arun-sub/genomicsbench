@@ -262,8 +262,8 @@ int main(int argc, char *argv[])
 	}
 	double rtime = realtime();
 	h = count_file(argv[o.ind], k, p, block_size, n_thread);
-	fprintf(stderr, "Time taken %.3f sec\n", realtime() - rtime);
 	print_hist(h, n_thread);
+    fprintf(stderr, "Time taken %.3f sec\n", realtime() - rtime);
 	for (i = 0; i < 1<<p; ++i) kc_c4_destroy(h->h[i]);
 	free(h->h); free(h);
 	return 0;

@@ -24,13 +24,33 @@ namespace shacc_pairhmm {
   };
   
   struct Batch {
+    int id;
     int num_reads;
     int num_haps;
     long num_cells;
     Read* reads;
     Haplotype* haps;
     double* results;
+
+    bool operator < (const Batch& b) const
+    {
+        return (num_cells < b.num_cells);
+    }
   };
+
+    struct SortByCells
+    {
+        bool operator()( const Batch& lx, const Batch& rx ) const {
+            return lx.num_cells < rx.num_cells;
+        }
+    };
+
+    struct SortById
+    {
+        bool operator()( const Batch& lx, const Batch& rx ) const {
+            return lx.id < rx.id;
+        }
+    };
 
   extern WEAK bool calculate(Batch& batch);
 }

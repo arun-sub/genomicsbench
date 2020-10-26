@@ -18,6 +18,14 @@
 #include "medaka_common.h"
 #include "medaka_counts.h"
 
+// #define PRINT_OUTPUT 1
+
+#define VTUNE_ANALYSIS 1
+
+#ifdef VTUNE_ANALYSIS
+    #include <ittnotify.h>
+#endif
+
 #define bam1_seq(b) ((b)->data + (b)->core.n_cigar*4 + (b)->core.l_qname)
 #define bam1_seqi(s, i) (bam_seqi((s), (i)))
 #define bam_nt16_rev_table seq_nt16_str
@@ -472,6 +480,9 @@ plp_data calculate_pileup(
 
 // Demonstrates usage
 int main(int argc, char *argv[]) {
+#ifdef VTUNE_ANALYSIS
+    __itt_pause();
+#endif
     if(argc < 4) {
         fprintf(stderr, "Usage %s <bam> <region> <num_threads>\n", argv[0]);
         exit(1);
@@ -538,6 +549,9 @@ int main(int argc, char *argv[]) {
     struct timeval start_time, end_time;
     double runtime = 0;
     gettimeofday(&start_time, NULL);
+#ifdef VTUNE_ANALYSIS
+    __itt_resume();
+#endif
     // process batches in parallel
     #pragma omp parallel num_threads(numThreads)
     {
@@ -549,13 +563,18 @@ int main(int argc, char *argv[]) {
                                         weibull_summation, read_group);
             }
     }
+#ifdef VTUNE_ANALYSIS
+    __itt_pause();
+#endif
     gettimeofday(&end_time, NULL);
     runtime += (end_time.tv_sec - start_time.tv_sec)*1e6 + end_time.tv_usec - start_time.tv_usec;
 
     // print pileup and clean up
     for (i = 0; i < batches.n; i++) {
+#ifdef PRINT_OUTPUT
         print_pileup_data(batches.a[i].pileup, num_dtypes, dtypes, num_homop);
         fprintf(stdout, "pileup is length %zu, with buffer of %zu columns\n", batches.a[i].pileup->n_cols, batches.a[i].pileup->buffer_cols);
+#endif
         destroy_plp_data(batches.a[i].pileup);
     }
     kv_destroy(batches);

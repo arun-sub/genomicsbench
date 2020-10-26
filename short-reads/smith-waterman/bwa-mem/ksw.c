@@ -31,6 +31,10 @@
 #include <emmintrin.h>
 #include "ksw.h"
 
+#define PROFILE 1
+
+int64_t numCellsComputed = 0;
+
 unsigned char seq_nt4_table[256] = {
 	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
 	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
@@ -50,7 +54,8 @@ unsigned char seq_nt4_table[256] = {
 	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4
 };
 
-#define MAX_SEQ 1000
+// #define MAX_SEQ 1000
+#define MAX_SEQ 20000000
 
 #ifdef USE_MALLOC_WRAPPERS
 #  include "malloc_wrap.h"
@@ -96,6 +101,9 @@ int ksw_extend2(int qlen, const uint8_t *query, int tlen, const uint8_t *target,
 	max = h0, max_i = max_j = -1; max_ie = -1, gscore = -1;
 	max_off = 0;
 	beg = 0, end = qlen;
+#ifdef PROFILE
+	numCellsComputed = 0;
+#endif
 	for (i = 0; i < tlen; ++i) {
 		int t, f = 0, h1, m = 0, mj = -1;
 		int8_t *q = &qp[target[i] * qlen];
@@ -114,6 +122,9 @@ int ksw_extend2(int qlen, const uint8_t *query, int tlen, const uint8_t *target,
 			//   H(i,j)   = max{H(i-1,j-1)+S(i,j), E(i,j), F(i,j)}
 			//   E(i+1,j) = max{H(i,j)-gapo, E(i,j)} - gape
 			//   F(i,j+1) = max{H(i,j)-gapo, F(i,j)} - gape
+#ifdef PROFILE
+			numCellsComputed++;
+#endif
 			eh_t *p = &eh[j];
 			int h, M = p->h, e = p->e; // get H(i-1,j-1) and E(i-1,j)
 			p->h = h1;          // set H(i,j-1) for the next row
@@ -157,6 +168,9 @@ int ksw_extend2(int qlen, const uint8_t *query, int tlen, const uint8_t *target,
 		//beg = 0; end = qlen; // uncomment this line for debugging
 	}
 	free(eh); free(qp);
+#ifdef PROFILE
+	printf("Qlen:%d,Rlen:%d,ScalarNumCellsComputed:%lld\n", qlen, tlen, numCellsComputed);
+#endif
 	if (_qle) *_qle = max_j + 1;
 	if (_tle) *_tle = max_i + 1;
 	if (_gtle) *_gtle = max_ie + 1;
@@ -241,9 +255,9 @@ int main(int argc, char *argv[])
 			ref_ar[i] = seq_nt4_table[(int)target[i]]; 
 		}
 		int score, qle, tle, gtle, gscore, max_off;
-		__parsec_roi_begin();
+		// __parsec_roi_begin();
 		score = ksw_extend2(qlen, read_ar, tlen, ref_ar, 5, mat, gapo, gape, gapo, gape, w, 5, 100, h0, &qle, &tle, &gtle, &gscore, &max_off); 
-		__parsec_roi_end();
+		// __parsec_roi_end();
 		fprintf(fp_out, "%d,%d,%d,%d,%d,%d\n", score, qle, tle, gtle, gscore, max_off);
 		numLinesRead += 1;
 		free(read_ar);

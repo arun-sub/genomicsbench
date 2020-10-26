@@ -1,7 +1,9 @@
-CXX     = g++
-LIBS = -lz -lm -lbz2 -llzma -fopenmp
+#CXX     = g++
+CXX		 = icpc
+VTUNE_HOME= /opt/intel/vtune_profiler
+LIBS = -lz -lm -lbz2 -llzma -L${VTUNE_HOME}/lib64 -littnotify -fopenmp
 CXXFLAGS   = -O3 -fopenmp
-INC = -Ilibcuckoo
+INC = -Ilibcuckoo -I${VTUNE_HOME}/include
 
 
 all: sequence_container.cpp sequence.cpp vertex_index.cpp kmer_cnt.cpp

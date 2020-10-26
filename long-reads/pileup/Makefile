@@ -1,7 +1,9 @@
-CC     = gcc
-LIBS = -Lhtslib -lz -lm -lbz2 -llzma -lpthread -lcurl -lcrypto -fopenmp
+#CC     = gcc
+CC		= icc
+VTUNE_HOME= /opt/intel/vtune_profiler
+LIBS = -Lhtslib -lz -lm -lbz2 -llzma -lpthread -lcurl -lcrypto -L${VTUNE_HOME}/lib64 -littnotify -fopenmp
 CCFLAGS   = -g -Wall -pthread -fstack-protector-strong -D_FORTIFY_SOURCE=2 -fPIC -std=c99 -O3 -fopenmp
-INC = -Ihtslib
+INC = -Ihtslib -I${VTUNE_HOME}/include
 
 all: medaka_common.c medaka_counts.c medaka_bamiter.c
 	$(CC) $(CCFLAGS) medaka_common.c medaka_counts.c medaka_bamiter.c htslib/libhts.a $(INC) $(LIBS) -o pileup -std=c99 -O3

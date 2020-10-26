@@ -30,14 +30,17 @@
 
 
 EXE=		xeonbsw
-CXX=		g++
-CXXFLAGS=	-DSORT_PAIRS -DRDT -O3 -std=c++11 -fopenmp -mavx2 #-mtune=native -march=native
+#CXX=		g++
+CXX=		icpc
+CXXFLAGS=	-DSORT_PAIRS -DRDT -DENABLE_PREFETCH -DBWA_OTHER_ELE=0 -O3 -std=c++11 -fopenmp -mavx2 #-mtune=native -march=native
 #CPPFLAGS=	-DSORT_PAIRS -DRDT -DENABLE_PREFETCH -DBWA_OTHER_ELE=0
 #CPPFLAGS=	-DENABLE_PREFETCH -DBWA_OTHER_ELE=0
 #BWAMEM2_PATH=../../../tools/bwa-mem2
 #INCLUDES=	-I$(BWAMEM2_PATH)/src
 #LIBS=		-L$(BWAMEM2_PATH) -fopenmp -lz -lbwa
-LIBS=		-fopenmp -lz
+VTUNE_HOME= /opt/intel/vtune_profiler
+INCLUDES=	-I${VTUNE_HOME}/include
+LIBS=		-fopenmp -L${VTUNE_HOME}/lib64 -littnotify -lz
 
 .PHONY:all clean depend
 .SUFFIXES:.cpp .o

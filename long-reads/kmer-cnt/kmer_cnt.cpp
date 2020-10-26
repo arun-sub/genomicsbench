@@ -15,8 +15,16 @@
 #include "logger.h"
 #include "utils.h"
 #include "memory_info.h"
+#include "time.h"
+#include "sys/time.h"
 
 #include <getopt.h>
+
+#define VTUNE_ANALYSIS 1
+
+#ifdef VTUNE_ANALYSIS
+    #include <ittnotify.h>
+#endif
 
 bool parseArgs(int argc, char** argv, std::string& readsFasta, 
 			   std::string& logFile,
@@ -101,6 +109,9 @@ bool parseArgs(int argc, char** argv, std::string& readsFasta,
 
 int main(int argc, char** argv)
 {
+#ifdef VTUNE_ANALYSIS
+    __itt_pause();
+#endif
 	#ifdef NDEBUG
 	signal(SIGSEGV, segfaultHandler);
 	std::set_terminate(exceptionHandler);
@@ -186,6 +197,12 @@ int main(int argc, char** argv)
 	// static const int TANDEM_FREQ = Config::get("meta_read_filter_kmer_freq");
 
 	//Building index
+	struct timeval start_time, end_time;
+	double runtime = 0;
+	gettimeofday(&start_time, NULL);
+#ifdef VTUNE_ANALYSIS
+    __itt_resume();
+#endif
 	bool useMinimizers = Config::get("use_minimizers");
 	if (useMinimizers)
 	{
@@ -198,9 +215,13 @@ int main(int argc, char** argv)
 		// vertexIndex.buildIndexUnevenCoverage(MIN_FREQ, SELECT_RATE, 
 		//									 TANDEM_FREQ);
 	}
-
+#ifdef VTUNE_ANALYSIS
+    __itt_pause();
+#endif
+	gettimeofday(&end_time, NULL);
+	runtime += (end_time.tv_sec - start_time.tv_sec)*1e6 + end_time.tv_usec - start_time.tv_usec;
 	Logger::get().debug() << "Peak RAM usage: " 
 		<< getPeakRSS() / 1024 / 1024 / 1024 << " Gb";
-
+	fprintf(stderr, "Kernel time: %.3f sec\n", runtime * 1e-6);
 	return 0;
 }

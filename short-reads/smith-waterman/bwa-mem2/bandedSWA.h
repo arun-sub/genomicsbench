@@ -249,7 +249,8 @@ public:
                              int zdrop,
                              int32_t w,
                              uint16_t qlen[],
-                             uint16_t myband[]);
+                             uint16_t myband[],
+                             int64_t* nCellsComputed);
     
 #endif  //axv2
 
@@ -334,6 +335,10 @@ private:
     int64_t setupTicks;
     int64_t swTicks;
     int64_t sort2Ticks;
+    int64_t swComputationTicks;
+    int64_t swBandAdjustmentTicks;
+
+    int64_t numCellsComputed;
 };
 
 
@@ -341,5 +346,7 @@ private:
 #define DP1 5
 #define DP2 6
 #define DP3 7
+
+// #define PROFILE 1
 
 #endif

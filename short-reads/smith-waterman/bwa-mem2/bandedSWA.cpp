@@ -72,7 +72,12 @@ BandedPairWiseSW::BandedPairWiseSW(const int o_del, const int e_del, const int o
     setupTicks = 0;
     sort1Ticks = 0;
     swTicks = 0;
+    swComputationTicks = 0;
+    swBandAdjustmentTicks = 0;
     sort2Ticks = 0;
+#ifdef PROFILE
+    numCellsComputed = 0;
+#endif
     this->F8_ = this->H8_  = this->H8__ = NULL;
     this->F16_ = this->H16_  = this->H16__ = NULL;
     
@@ -104,10 +109,15 @@ int64_t BandedPairWiseSW::getTicks()
 {
     //printf("oneCount = %ld, totalCount = %ld\n", oneCount, totalCount);
     int64_t totalTicks = sort1Ticks + setupTicks + swTicks + sort2Ticks;
-    printf("cost breakup: %ld, %ld, %ld, %ld, %ld\n",
-            sort1Ticks, setupTicks, swTicks, sort2Ticks,
+    #ifdef PROFILE
+        printf("cost breakup: Sort1:%ld, Setup+SOA:%ld, SWComputation:%ld, SWBandAdjustment:%ld, Sort2:%ld, Total:%ld\n",
+            sort1Ticks, setupTicks + (swTicks - swComputationTicks), prof[DP1][0], prof[DP2][0] + prof[DP3][0], sort2Ticks,
             totalTicks);
-
+    #else 
+        printf("cost breakup: Sort1:%ld, Setup:%ld, SWComputation:%ld, SWComputationOnly:%ld, Sort2:%ld, Total:%ld\n",
+                sort1Ticks, setupTicks, swTicks, swComputationTicks, sort2Ticks,
+                totalTicks);
+    #endif
     return totalTicks;
 }
 
@@ -353,7 +363,7 @@ void BandedPairWiseSW::smithWatermanBatchWrapper8(SeqPair *pairArray,
 #endif
     
     int eb = end_bonus;
-#pragma omp parallel num_threads(numThreads)
+// #pragma omp parallel num_threads(numThreads)
     {
         int32_t i;
         uint16_t tid = omp_get_thread_num();
@@ -391,7 +401,7 @@ void BandedPairWiseSW::smithWatermanBatchWrapper8(SeqPair *pairArray,
         int nstart = 0, nend = numPairs;
 
         
-#pragma omp for schedule(dynamic, 128)
+// #pragma omp for schedule(dynamic, 128)
         for(i = nstart; i < nend; i+=SIMD_WIDTH8)
         {
             int32_t j, k;
@@ -1053,10 +1063,11 @@ void BandedPairWiseSW::smithWatermanBatchWrapper16(SeqPair *pairArray,
 #endif
 
     int eb = end_bonus;
-#pragma omp parallel num_threads(numThreads)
+// #pragma omp parallel num_threads(numThreads)
     {
         int32_t i;
-        uint16_t tid = omp_get_thread_num(); 
+        // uint16_t tid = omp_get_thread_num();
+        uint16_t tid = 0; 
         uint16_t *mySeq1SoA = seq1SoA + tid * MAX_SEQ_LEN16 * SIMD_WIDTH16;
         uint16_t *mySeq2SoA = seq2SoA + tid * MAX_SEQ_LEN16 * SIMD_WIDTH16;
         uint8_t *seq1;
@@ -1084,7 +1095,7 @@ void BandedPairWiseSW::smithWatermanBatchWrapper16(SeqPair *pairArray,
         
         int nstart = 0, nend = numPairs;
 
-#pragma omp for schedule(dynamic, 128)
+// #pragma omp for schedule(dynamic, 128)
         for(i = nstart; i < nend; i+=SIMD_WIDTH16)
         {
             int32_t j, k;
@@ -1200,6 +1211,10 @@ void BandedPairWiseSW::smithWatermanBatchWrapper16(SeqPair *pairArray,
                 }
             }
 
+            int64_t nCellsComputed = 0;
+#if RDT
+            int64_t tim_c = __rdtsc();
+#endif
             smithWaterman256_16(mySeq1SoA,
                                 mySeq2SoA,
                                 maxLen1,
@@ -1211,7 +1226,15 @@ void BandedPairWiseSW::smithWatermanBatchWrapper16(SeqPair *pairArray,
                                 zdrop,
                                 bsize, 
                                 qlen,
-                                myband);
+                                myband,
+                                &nCellsComputed);
+#if RDT
+            swComputationTicks += __rdtsc() - tim_c;
+#endif
+
+#ifdef PROFILE
+            fprintf(stderr, "NumCellsComputed:%lld\n", nCellsComputed * SIMD_WIDTH16);
+#endif
         }
     }
 
@@ -1267,7 +1290,8 @@ void BandedPairWiseSW::smithWaterman256_16(uint16_t seq1SoA[],
                                            int zdrop,
                                            int32_t w,
                                            uint16_t qlen[],
-                                           uint16_t myband[])
+                                           uint16_t myband[],
+                                           int64_t* nCellsComputed)
 {
     __m256i match256     = _mm256_set1_epi16(this->w_match);
     __m256i mismatch256  = _mm256_set1_epi16(this->w_mismatch);
@@ -1435,6 +1459,9 @@ void BandedPairWiseSW::smithWaterman256_16(uint16_t seq1SoA[],
         j256 = _mm256_set1_epi16(beg);
         for(j = beg; j < end; j++)
         {
+#ifdef PROFILE
+            *nCellsComputed += 1;
+#endif
             __m256i f11, f21, s2;
             h00 = _mm256_load_si256((__m256i *)(H_h + j * SIMD_WIDTH16));
             f11 = _mm256_load_si256((__m256i *)(F + j * SIMD_WIDTH16));
@@ -1525,7 +1552,6 @@ void BandedPairWiseSW::smithWaterman256_16(uint16_t seq1SoA[],
         prof[DP1][0] += __rdtsc() - tim1;
         tim1 = __rdtsc();
 #endif
-        
         /* Narrowing of the band */
         /* From beg */
         int l;
@@ -1614,7 +1640,7 @@ void BandedPairWiseSW::smithWaterman256_16(uint16_t seq1SoA[],
         // _mm256_store_si256((__m256i *) tail, tail256);       
 
 #if RDT
-        prof[DP2][0] += __rdtsc() - tim1;
+        prof[DP2][0] += __rdtsc() - tim1; 
 #endif
     }
     

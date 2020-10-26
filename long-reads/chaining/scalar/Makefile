@@ -1,5 +1,5 @@
-#CXX = icpc
-CXX = g++
+CXX = icpc
+#CXX = g++
 
 # path #
 SRC_PATH = src
@@ -7,7 +7,7 @@ BUILD_PATH = build
 BIN_PATH = $(BUILD_PATH)/bin
 
 # executable #
-BIN_NAME = kernel
+BIN_NAME = chain
 
 # extensions #
 SRC_EXT = cpp
@@ -24,10 +24,11 @@ DEPS = $(OBJECTS:.o=.d)
 
 # flags #
 #COMPILE_FLAGS = -std=c++11 -Wall -Wextra -g -O3 -fopenmp -xAVX2 -axAVX2
+VTUNE_HOME= /opt/intel/vtune_profiler
 COMPILE_FLAGS = -std=c++11 -Wall -Wextra -g -O3 -fopenmp -mavx2
-INCLUDES = -I /usr/local/include -I../../../tools/minimap2
+INCLUDES = -I /usr/local/include -I../../../tools/minimap2 -I${VTUNE_HOME}/include
 # Space-separated pkg-config libraries used by this project
-LIBS = -L../../../tools/minimap2 -lminimap2
+LIBS = -L../../../tools/minimap2 -lminimap2 -L${VTUNE_HOME}/lib64 -littnotify
 
 .PHONY: default_target
 default_target: release
@@ -62,7 +63,7 @@ all: $(BIN_PATH)/$(BIN_NAME)
 $(BIN_PATH)/$(BIN_NAME): $(OBJECTS)
 	@echo "Linking: $@"
 	#$(CXX) -O3 -fopenmp -xAVX2 -axAVX2 $(OBJECTS) -o $@
-	$(CXX) -O3 -fopenmp -mavx2 $(OBJECTS) -o $@
+	$(CXX) -O3 -fopenmp -mavx2 $(OBJECTS) $(INCLUDES) $(LIBS) -o $@
 
 # Add dependency files, if they exist
 -include $(DEPS)
@@ -72,4 +73,4 @@ $(BIN_PATH)/$(BIN_NAME): $(OBJECTS)
 # dependency files to provide header dependencies
 $(BUILD_PATH)/%.o: $(SRC_PATH)/%.$(SRC_EXT)
 	@echo "Compiling: $< -> $@"
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -MP -MMD -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDES) $(LIBS) -MP -MMD -c $< -o $@

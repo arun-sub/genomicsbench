@@ -39,6 +39,13 @@ Authors: Vasimuddin Md <vasimuddin.md@intel.com>; Sanchit Misra <sanchit.misra@i
 #include "utils.h"
 #include "bandedSWA.h"
 
+// #define VTUNE_ANALYSIS 1
+
+#define CLMUL 8
+#ifdef VTUNE_ANALYSIS
+    #include <ittnotify.h>
+#endif
+
 #define DEFAULT_MATCH 1
 #define DEFAULT_MISMATCH 4
 #define DEFAULT_OPEN 6
@@ -46,7 +53,7 @@ Authors: Vasimuddin Md <vasimuddin.md@intel.com>; Sanchit Misra <sanchit.misra@i
 #define DEFAULT_AMBIG -1
 
 #undef MAX_SEQ_LEN_REF
-#define MAX_SEQ_LEN_REF 512
+#define MAX_SEQ_LEN_REF 2048
 #undef MAX_SEQ_LEN_QER
 #define MAX_SEQ_LEN_QER 256
 
@@ -55,7 +62,7 @@ Authors: Vasimuddin Md <vasimuddin.md@intel.com>; Sanchit Misra <sanchit.misra@i
 // #define LOW_INIT_VALUE (INT32_MIN/2)
 // #define AMBIG 52
 double freq = 2.6*1e9;
-int32_t w_match, w_mismatch, w_open, w_extend, w_ambig, numThreads = 1;
+int32_t w_match, w_mismatch, w_open, w_extend, w_ambig, numThreads = 1, batchSize = 0;
 uint64_t SW_cells;
 char *pairFileName;
 FILE *pairFile;
@@ -110,6 +117,9 @@ void parseCmdLine(int argc, char *argv[])
 		}
         if(strcmp(argv[i], "-t") == 0) {
 			numThreads = atoi(argv[i + 1]);
+		}
+        if(strcmp(argv[i], "-b") == 0) {
+			batchSize = atoi(argv[i + 1]);
 		}
 	}
 	if(pairFlag == 0) {
@@ -190,8 +200,11 @@ uint64_t find_stats(uint64_t *val, int nt, double &min, double &max, double &avg
 
 int main(int argc, char *argv[])
 {
+#ifdef VTUNE_ANALYSIS
+    __itt_pause();
+#endif
 	if (argc < 3) {
-		fprintf(stderr, "usage: <exec> -pairs <InSeqFile> -t <threads>!!\n");
+		fprintf(stderr, "usage: <exec> -pairs <InSeqFile> -t <threads> -b <batch_size>!!\n");
 		exit(EXIT_FAILURE);
 	}
 	
@@ -221,6 +234,9 @@ int main(int argc, char *argv[])
 
     size_t numPairs = numLines / 3;
     size_t roundNumPairs = ((numPairs + SIMD_WIDTH16 - 1) / SIMD_WIDTH16 ) * SIMD_WIDTH16;
+    if (batchSize == 0) { 
+        batchSize = roundNumPairs;
+    }
     printf("Number of input pairs: %ld\n", numPairs);
 
     size_t memAlloc = roundNumPairs * (sizeof(SeqPair) + MAX_SEQ_LEN_QER * sizeof(int8_t) + MAX_SEQ_LEN_REF * sizeof(int8_t));
@@ -234,23 +250,50 @@ int main(int argc, char *argv[])
 	int zdrop = 100, w = 100, end_bonus = 5;
 
 	// OutScore *outScoreArray = (OutScore *)_mm_malloc(MAX_NUM_PAIRS * sizeof(OutScore), 64);
-		
-    BandedPairWiseSW *bsw = new BandedPairWiseSW(w_open, w_extend, w_open, w_extend,
-                zdrop, end_bonus, mat,
-                w_match, w_mismatch, numThreads);
+	BandedPairWiseSW *bsw[numThreads];
+    for (int i = 0; i < numThreads; i++) {
+        bsw[i] = new BandedPairWiseSW(w_open, w_extend, w_open, w_extend,
+                    zdrop, end_bonus, mat,
+                    w_match, w_mismatch, 1);
+    }
 
 	int64_t startTick, totalTicks = 0, readTim = 0;
 	
 	uint64_t tim = __rdtsc();
 
-	loadPairs(seqPairArray, seqBufRef, seqBufQer, numPairs);
-	readTim += __rdtsc() - tim;
+    int64_t numPairsIndex = 0;
+    for (int64_t i = 0; i < roundNumPairs; i += batchSize) {
+        int nPairsBatch = (numPairs - i) >= batchSize ? batchSize : numPairs - i;
+        loadPairs(seqPairArray + numPairsIndex, seqBufRef + numPairsIndex * MAX_SEQ_LEN_REF, seqBufQer + numPairsIndex * MAX_SEQ_LEN_QER, nPairsBatch);
+        numPairsIndex += nPairsBatch;
+    }
+    readTim += __rdtsc() - tim;
 
     startTick = __rdtsc();
-    bsw->getScores16(seqPairArray, seqBufRef, seqBufQer, numPairs, numThreads, w);
+    
+    #ifdef VTUNE_ANALYSIS
+        __itt_resume();
+    #endif
+    int64_t workTicks[CLMUL * numThreads];
+    memset(workTicks, 0, CLMUL * numThreads * sizeof(int64_t));
+#pragma omp parallel num_threads(numThreads)
+{
+    int tid = omp_get_thread_num();
+    #pragma omp for schedule(dynamic, 1) 
+        for (int64_t i = 0; i < roundNumPairs; i += batchSize) {
+            int nPairsBatch = (numPairs - i) >= batchSize ? batchSize : numPairs - i;
+            int64_t st1 = __rdtsc();
+            bsw[tid]->getScores16(seqPairArray + i, seqBufRef + i * MAX_SEQ_LEN_REF, seqBufQer + i * MAX_SEQ_LEN_QER, nPairsBatch, 1, w);
+            int64_t et1 = __rdtsc();
+            workTicks[CLMUL * tid] += (et1 - st1);
+        }
+    printf("%d] workTicks = %ld\n", tid, workTicks[CLMUL * tid]);  
+}
+    
+    #ifdef VTUNE_ANALYSIS
+        __itt_pause();
+    #endif
     totalTicks += __rdtsc() - startTick;
-
-
     printf("Executed AVX2 vector code...\n");
 
 	tim = __rdtsc();
@@ -263,6 +306,16 @@ int main(int argc, char *argv[])
 	printf("Read time = %0.2lf s\n", readTim/freq);
 	printf("Overall SW cycles = %ld, %0.2lf s\n", totalTicks, totalTicks * 1.0 / freq);
 	printf("Total Pairs processed: %d\n", numPairs);
+    
+    int64_t sumTicks = 0;
+    int64_t maxTicks = 0;
+    for(int i = 0; i < numThreads; i++)
+    {
+        sumTicks += workTicks[CLMUL * i];
+        if(workTicks[CLMUL * i] > maxTicks) maxTicks = workTicks[CLMUL * i];
+    }
+    double avgTicks = (sumTicks * 1.0) / numThreads;
+    printf("avgTicks = %lf, maxTicks = %ld, load imbalance = %lf\n", avgTicks, maxTicks, maxTicks/avgTicks);
 
 
 	// printf("SW cells(T)  = %ld\n", SW_cells);
@@ -288,9 +341,12 @@ int main(int argc, char *argv[])
 	/**** free memory *****/
 	_mm_free(seqPairArray);
 	_mm_free(seqBufRef);
-	_mm_free(seqBufQer);
-    bsw->getTicks();
-	delete bsw;
+	_mm_free(seqBufQer); 
+    // bsw->getTicks();
+    for (int i = 0; i < numThreads; i++) {
+        bsw[i]->getTicks();
+	    delete bsw[i];
+    }
 	
 	fclose(pairFile);
 	return 1;
