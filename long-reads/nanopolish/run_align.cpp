@@ -380,6 +380,27 @@ std::vector<AlignedPair> adaptive_banded_simple_event_align_kernel(size_t k, std
     return out;
 }
 
+
+const char *__parsec_roi_begin(const char *s, int *beg, int *end)
+{
+    const char *colon = strrchr(s, ':');
+    if (colon == NULL) {
+        *beg = 0; *end = 0x7fffffff;
+        return s + strlen(s);
+    }
+    return NULL;
+}
+
+const char *__parsec_roi_end(const char *s, int *beg, int *end)
+{
+    const char *colon = strrchr(s, ':');
+    if (colon == NULL) {
+        *beg = 0; *end = 0x7fffffff;
+        return s + strlen(s);
+    }
+    return NULL;
+}
+
 int main(int argc, char** argv) {
     for (char c; (c = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1;) {
         switch (c) {
@@ -425,9 +446,14 @@ int main(int argc, char** argv) {
     // file1 >> sequence;
 
     file1.close();
-
+    
+    const char *roi_q;
+    int roi_i, roi_j;
+    char roi_s[20] = "chr22:0-5";
+    roi_q = __parsec_roi_begin(roi_s, &roi_i, &roi_j);
     std::vector<AlignedPair> event_alignment_new = adaptive_banded_simple_event_align_kernel(k, events, scalings, states, sequence);
-
+    roi_q = __parsec_roi_end(roi_s, &roi_i, &roi_j);
+    
     std::vector<SquiggleEvent>().swap(events);
     std::vector<PoreModelStateParams>().swap(states);
 
