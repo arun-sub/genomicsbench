@@ -39,7 +39,7 @@ Authors: Vasimuddin Md <vasimuddin.md@intel.com>; Sanchit Misra <sanchit.misra@i
 #include "utils.h"
 #include "bandedSWA.h"
 
-// #define VTUNE_ANALYSIS 1
+#define VTUNE_ANALYSIS 1
 
 #define CLMUL 8
 #ifdef VTUNE_ANALYSIS

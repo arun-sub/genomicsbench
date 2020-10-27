@@ -6,8 +6,10 @@
 #include <stdio.h>
 #include <cstdint>
 #include <iostream>
+#include <cstring>
 #include <fstream>
 #include <string>
+#include <algorithm>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <time.h>
@@ -21,6 +23,10 @@
 
 #define VTUNE_ANALYSIS 1
 
+#define CLMUL 8
+
+// #define ENABLE_SORT 1
+
 #ifdef VTUNE_ANALYSIS
     #include <ittnotify.h>
 #endif
@@ -32,9 +38,25 @@ using Alignment = std::vector<std::pair<std::int32_t, std::int32_t>>;
 // #define PRINT_OUTPUT
 
 typedef struct {
+    int id;
     vector<string> seqs;
     string consensus_seq;
+    uint8_t padding[24];
 } Batch;
+
+struct SortBySize
+{
+    bool operator()( const Batch& lx, const Batch& rx ) const {
+        return lx.seqs.size() > rx.seqs.size();
+    }
+};
+
+struct SortById
+{
+    bool operator()( const Batch& lx, const Batch& rx ) const {
+        return lx.id < rx.id;
+    }
+};
 
 double get_realtime()
 {
@@ -60,9 +82,11 @@ void readFile(ifstream& in_file, vector<Batch>& batches) {
     if (!in_file.eof()) {
         getline(in_file, seq); // header line
     }
+    int count = 0;
     while (!in_file.eof()) { // loop across batches
         if (seq[1] == '0') {
             Batch b;
+            b.id = count++;
             while (!in_file.eof()) { // loop across sequences in batch
                 getline(in_file, seq); // sequence line
                 b.seqs.push_back(seq);
@@ -188,17 +212,25 @@ int main(int argc, char** argv) {
 }
 
     readFile(fp_seq, batches);
-
+    fprintf(stderr, "Number of batches: %lu, Size of batch struct %d\n", batches.size(), sizeof(Batch));
+    int64_t workTicks[CLMUL * numThreads];
+    std::memset(workTicks, 0, CLMUL * numThreads * sizeof(int64_t));
     gettimeofday(&start_time, NULL); real_start = get_realtime();
 
 #ifdef VTUNE_ANALYSIS
     __itt_resume();
 #endif
+
+#ifdef ENABLE_SORT
+    std::sort(batches.begin(), batches.end(), SortBySize());
+#endif
+
 #pragma omp parallel num_threads(numThreads)
 {
     int tid = omp_get_thread_num();
     #pragma omp for schedule(dynamic, 1)
         for (int i = 0; i < batches.size(); i++) {
+            int64_t st1 = __rdtsc();
             // gettimeofday(&t_start, NULL);
             auto graph = spoa::createGraph();
             // gettimeofday(&t_end, NULL);
@@ -218,8 +250,16 @@ int main(int argc, char** argv) {
             batches[i].consensus_seq = graph->generate_consensus();
             // gettimeofday(&t_end, NULL);
             // generateConsensusTime += (t_end.tv_sec - t_start.tv_sec)*1e6 + t_end.tv_usec - t_start.tv_usec;
-        }   
+            int64_t et1 = __rdtsc();
+            workTicks[CLMUL * tid] += (et1 - st1);
+        }
+    printf("%d] workTicks = %ld\n", tid, workTicks[CLMUL * tid]);
+
 }
+#ifdef ENABLE_SORT
+    std::sort(batches.begin(), batches.end(), SortById());
+#endif
+
 #ifdef VTUNE_ANALYSIS
     __itt_pause();
 #endif
@@ -227,6 +267,15 @@ int main(int argc, char** argv) {
     runtime += (end_time.tv_sec - start_time.tv_sec)*1e6 + end_time.tv_usec - start_time.tv_usec;
     realtime += (real_end-real_start);
 
+    int64_t sumTicks = 0;
+    int64_t maxTicks = 0;
+    for(int i = 0; i < numThreads; i++)
+    {
+        sumTicks += workTicks[CLMUL * i];
+        if(workTicks[CLMUL * i] > maxTicks) maxTicks = workTicks[CLMUL * i];
+    }
+    double avgTicks = (sumTicks * 1.0) / numThreads;
+    printf("avgTicks = %lf, maxTicks = %ld, load imbalance = %lf\n", avgTicks, maxTicks, maxTicks/avgTicks);
 #ifdef PRINT_OUTPUT
     for (int i = 0; i < batches.size(); i++) {
         cout << ">Consensus_sequence" << endl;
