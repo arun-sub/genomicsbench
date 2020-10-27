@@ -106,7 +106,25 @@ bool parseArgs(int argc, char** argv, std::string& readsFasta,
 
 	return true;
 }
+const char *__parsec_roi_begin(const char *s, int *beg, int *end)
+{
+    const char *colon = strrchr(s, ':');
+    if (colon == NULL) {
+        *beg = 0; *end = 0x7fffffff;
+        return s + strlen(s);
+    }
+    return NULL;
+}
 
+const char *__parsec_roi_end(const char *s, int *beg, int *end)
+{
+    const char *colon = strrchr(s, ':');
+    if (colon == NULL) {
+        *beg = 0; *end = 0x7fffffff;
+        return s + strlen(s);
+    }
+    return NULL;
+}
 int main(int argc, char** argv)
 {
 #ifdef VTUNE_ANALYSIS
@@ -200,9 +218,13 @@ int main(int argc, char** argv)
 	struct timeval start_time, end_time;
 	double runtime = 0;
 	gettimeofday(&start_time, NULL);
+	const char *roi_q;
+	int roi_i, roi_j;
+	char roi_s[20] = "chr22:0-5";
 #ifdef VTUNE_ANALYSIS
     __itt_resume();
 #endif
+	roi_q = __parsec_roi_begin(roi_s, &roi_i, &roi_j);
 	bool useMinimizers = Config::get("use_minimizers");
 	if (useMinimizers)
 	{
@@ -215,6 +237,7 @@ int main(int argc, char** argv)
 		// vertexIndex.buildIndexUnevenCoverage(MIN_FREQ, SELECT_RATE, 
 		//									 TANDEM_FREQ);
 	}
+	roi_q = __parsec_roi_end(roi_s, &roi_i, &roi_j);
 #ifdef VTUNE_ANALYSIS
     __itt_pause();
 #endif
