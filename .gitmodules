@@ -57,3 +57,6 @@
 [submodule "tools/Flye"]
 	path = tools/Flye
 	url = https://github.com/arun-sub/Flye.git
+[submodule "benchmarks/grm"]
+	path = benchmarks/grm
+	url = https://github.com/arun-sub/plink-ng.git
