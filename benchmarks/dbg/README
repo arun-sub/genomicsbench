@@ -1,0 +1,5 @@
+To compile: make
+Usage: ./debruijn <.bam> <region> <.fasta> <nthreads>
+Eg: ./debruijn /y/arunsub/punnet_data/inputs/de-bruijn/ERR194147-mem2-chr22.bam chr22:0-50818468 /y/arunsub/runs/broad.fasta 32
+
+Note that .bam and .fasta must be indexed to generate .bai and .fai respectively

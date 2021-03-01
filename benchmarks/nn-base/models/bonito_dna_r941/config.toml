@@ -1,0 +1,109 @@
+model = "dna_r9.4.1"
+
+[labels]
+labels = [ "N", "A", "C", "G", "T",]
+
+[input]
+features = 1
+
+[qscore]
+bias = -0.4
+scale = 1.3
+
+[encoder]
+activation = "swish"
+
+[[block]]
+filters = 344
+repeat = 1
+kernel = [ 9,]
+stride = [ 3,]
+dilation = [ 1,]
+dropout = 0.05
+residual = false
+separable = false
+
+[[block]]
+filters = 424
+repeat = 2
+kernel = [ 115,]
+stride = [ 1,]
+dilation = [ 1,]
+dropout = 0.05
+residual = true
+separable = true
+
+[[block]]
+filters = 464
+repeat = 7
+kernel = [ 5,]
+stride = [ 1,]
+dilation = [ 1,]
+dropout = 0.05
+residual = true
+separable = true
+
+[[block]]
+filters = 456
+repeat = 4
+kernel = [ 123,]
+stride = [ 1,]
+dilation = [ 1,]
+dropout = 0.05
+residual = true
+separable = true
+
+[[block]]
+filters = 440
+repeat = 9
+kernel = [ 9,]
+stride = [ 1,]
+dilation = [ 1,]
+dropout = 0.05
+residual = true
+separable = true
+
+[[block]]
+filters = 280
+repeat = 6
+kernel = [ 31,]
+stride = [ 1,]
+dilation = [ 1,]
+dropout = 0.05
+residual = true
+separable = true
+
+[[block]]
+filters = 384
+repeat = 1
+kernel = [ 67,]
+stride = [ 1,]
+dilation = [ 1,]
+dropout = 0.05
+residual = false
+separable = true
+
+[[block]]
+filters = 48
+repeat = 1
+kernel = [ 15,]
+stride = [ 1,]
+dilation = [ 1,]
+dropout = 0.05
+residual = false
+separable = false
+
+[training]
+config = "config/dna_r9.4.1.toml"
+command = "train"
+device = "cuda"
+lr = 0.001
+seed = 25
+epochs = 400
+batch = 512
+chunks = 3000000
+validation_split = 0.97
+amp = true
+multi_gpu = true
+force = true
+

@@ -27,9 +27,6 @@
 [submodule "tools/Clair"]
 	path = tools/Clair
 	url = https://github.com/Yufeng98/Clair.git
-[submodule "tools/nanopolish"]
-	path = tools/nanopolish
-	url = https://github.com/Yufeng98/nanopolish.git
 [submodule "popgen/plink-ng"]
 	path = popgen/plink-ng
 	url = https://github.com/arun-sub/plink-ng.git

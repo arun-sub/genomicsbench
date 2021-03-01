@@ -1,0 +1,8 @@
+Prerequisites:
+Add icpc to PATH
+Compile minimap2 in tools: cd ../../../tools/minimap2; make
+
+Compile chaining kernel: make clean; make
+Command line: 
+Small input: ./kernel -i /y/arunsub/punnet_data/inputs/chaining/in-1k.txt /y/arunsub/punnet_data/inputs/chaining/out-1k.txt
+Large input: ./kernel -i /y/arunsub/punnet_data/inputs/chaining/c_elegans_40x.10k.in -o /y/arunsub/punnet_data/inputs/chaining/c_elegans_40x.10k.out -t 1

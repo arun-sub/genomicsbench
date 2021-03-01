@@ -1,0 +1,2 @@
+Compile: make
+Run: ./kmer-cnt --reads Loman_E.coli_MAP006-1_2D_50x.fasta --config ../../tools/Flye/flye/config/bin_cfg/asm_raw_reads.cfg --threads 16 --debug
