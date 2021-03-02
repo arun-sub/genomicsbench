@@ -1,6 +1,8 @@
-# Punnet
+<p align="center"><img src="https://github.com/arun-sub/punnet/blob/master/img/genomics-bench.png" width="350"></p>
 
-Benchmark suite for genomics applications
+# GenomicsBench
+
+A performance benchmark suite for genomics applications
 
 ### Python setup
 
