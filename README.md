@@ -12,3 +12,8 @@ source venv3/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
+### Citation
+
+If you use GenomicsBench, please cite this work:
+
+>Arun Subramaniyan, Yufeng Gu, Timothy Dunn, Somnath Paul, Md. Vasimuddin, Sanchit Misra, David Blaauw, Satish Narayanasamy, Reetuparna Das. "GenomicsBench: A Benchmark Suite for Genomics"
