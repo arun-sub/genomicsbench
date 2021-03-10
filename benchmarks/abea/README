@@ -1,0 +1,2 @@
+Build: 'make CUDA_LIB=<path>' or just 'make' if /usr/local/cuda points to the install location
+Command line: './f5c eventalign -b <bam> -g <ref genome fasta> -r <fastq reads>'
