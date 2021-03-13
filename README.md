@@ -1,4 +1,4 @@
-<p align="center"><img src="https://github.com/arun-sub/punnet/blob/master/img/GenomicsBenchLogo.png" width="750"></p>
+<p align="center"><img src="https://github.com/arun-sub/punnet/blob/master/img/GenomicsBenchLogo-Colored.png" width="750"></p>
 
 # GenomicsBench
 
