@@ -33,7 +33,7 @@ pypy3 -m pip install --no-cache-dir intervaltree==3.0.2
 
 If you use GenomicsBench or find GenomicsBench useful, please cite this work:
 
-> **Arun Subramaniyan, Yufeng Gu, Timothy Dunn, Somnath Paul, Md. Vasimuddin, Sanchit Misra, David Blaauw, Satish Narayanasamy, Reetuparna Das. "GenomicsBench: A Benchmark Suite for Genomics", In IEEE International Symposium on Performance Analysis of Systems and Software (ISPASS), 2021 (to appear). **.
+> ***Arun Subramaniyan, Yufeng Gu, Timothy Dunn, Somnath Paul, Md. Vasimuddin, Sanchit Misra, David Blaauw, Satish Narayanasamy, Reetuparna Das. *GenomicsBench: A Benchmark Suite for Genomics*, In IEEE International Symposium on Performance Analysis of Systems and Software (ISPASS), 2021 (to appear)***
 
 ## Issues and bug reporting
 
