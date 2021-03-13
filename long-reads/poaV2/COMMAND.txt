@@ -1,2 +1,0 @@
-#From https://github.com/jts/nanocorrect/blob/master/nanocorrect.py
-#cmd = "poa -read_fasta %s -clustal %s -hb %s" % (in_fn, out_fn, blosum_file)

@@ -4,16 +4,38 @@
 
 A benchmark suite for genomics
 
-### Python setup
+## Python setup
+
+To run Python-based benchmarks nn-base and nn-variant, follow the steps below:
+
+* Download and install miniconda from [this](https://docs.conda.io/projects/continuumio-conda/en/latest/user-guide/install/download.html) link.
+
+* Follow the steps below to set up a conda environment:
 
 ```bash
-python3.7 -m venv venv3
-source venv3/bin/activate
+# make sure channels are added in conda
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+
+# create conda environment named "genomicsbench"
+conda create -n genomicsbench -c bioconda clair
+conda activate genomicsbench
+conda install deepdish
+
 pip install --upgrade pip
 pip install -r requirements.txt
+pypy3 -m ensurepip
+pypy3 -m pip install --no-cache-dir intervaltree==3.0.2
 ```
-### Citation
 
-If you use GenomicsBench, please cite this work:
+## Citation
 
->Arun Subramaniyan, Yufeng Gu, Timothy Dunn, Somnath Paul, Md. Vasimuddin, Sanchit Misra, David Blaauw, Satish Narayanasamy, Reetuparna Das. "GenomicsBench: A Benchmark Suite for Genomics", In IEEE International Symposium on Performance Analysis of Systems and Software (ISPASS), 2021 (to appear).
+If you use GenomicsBench or find GenomicsBench useful, please cite this work:
+
+> **Arun Subramaniyan, Yufeng Gu, Timothy Dunn, Somnath Paul, Md. Vasimuddin, Sanchit Misra, David Blaauw, Satish Narayanasamy, Reetuparna Das. "GenomicsBench: A Benchmark Suite for Genomics", In IEEE International Symposium on Performance Analysis of Systems and Software (ISPASS), 2021 (to appear). **.
+
+## Issues and bug reporting
+
+GenomicsBench is under active development and we appreciate any feedback and suggestions from the community. Feel free to raise an issue on Github or contact the authors: Arun Subramaniyan (arunsub@umich.edu), Yufeng Gu (yufenggu@umich.edu), Timothy Dunn (timdunn@umich.edu).
+

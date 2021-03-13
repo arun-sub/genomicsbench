@@ -1,8 +1,0 @@
-Command line to run kernel: 
-./pairhmm -f <path to .in file> -t <num threads> > output
-
-Command line to generate inputs from GATK:
-./gatk HaplotypeCaller -R broad.fasta -I ERR194147-mem2-chr22.bam -O ERR194147-mem2-chr22.vcf -L chr22:16090000-16590000 --native-pair-hmm-threads 1 --pcr-indel-model NONE >& ERR194147-mem2-chr22.log
-grep "INPUT" ERR194147-mem2-chr22.log | awk -F" " '{print $2, $3, $4, $5, $6}' > large.in
-sed 's/ *$//' large.in > large.in.2
-grep "OUTPUT" ERR194147-mem2-chr22.log | awk -F" " '{print $2' > large.out.expected

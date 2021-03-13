@@ -27,12 +27,6 @@
 [submodule "tools/Clair"]
 	path = tools/Clair
 	url = https://github.com/Yufeng98/Clair.git
-[submodule "popgen/plink-ng"]
-	path = popgen/plink-ng
-	url = https://github.com/arun-sub/plink-ng.git
-[submodule "popgen/gwas-speedup"]
-	path = popgen/gwas-speedup
-	url = https://github.com/arun-sub/gwas-speedup.git
 [submodule "tools/medaka"]
 	path = tools/medaka
 	url = https://github.com/arun-sub/medaka.git
@@ -48,12 +42,6 @@
 [submodule "tools/bonito"]
 	path = tools/bonito
 	url = https://github.com/TimD1/bonito.git
-[submodule "short-reads/deBruijn"]
-	path = short-reads/deBruijn
-	url = https://github.com/arun-sub/deBruijn.git
-[submodule "long-reads/pileup/htslib"]
-	path = long-reads/pileup/htslib
-	url = https://github.com/arun-sub/htslib.git
 [submodule "tools/Flye"]
 	path = tools/Flye
 	url = https://github.com/arun-sub/Flye.git
