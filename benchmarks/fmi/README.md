@@ -8,5 +8,5 @@ come back
 
 ```shell
 make
-./fmi_test <broad> <rep_reads.fastq> 19 512 1
+./fmi <index prefix> <fastq> <batch size> <min seed len> <nthreads>
 ```

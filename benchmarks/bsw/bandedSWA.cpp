@@ -114,9 +114,9 @@ int64_t BandedPairWiseSW::getTicks()
             sort1Ticks, setupTicks + (swTicks - swComputationTicks), prof[DP1][0], prof[DP2][0] + prof[DP3][0], sort2Ticks,
             totalTicks);
     #else 
-        printf("cost breakup: Sort1:%ld, Setup:%ld, SWComputation:%ld, SWComputationOnly:%ld, Sort2:%ld, Total:%ld\n",
-                sort1Ticks, setupTicks, swTicks, swComputationTicks, sort2Ticks,
-                totalTicks);
+        // printf("cost breakup: Sort1:%ld, Setup:%ld, SWComputation:%ld, SWComputationOnly:%ld, Sort2:%ld, Total:%ld\n",
+        //        sort1Ticks, setupTicks, swTicks, swComputationTicks, sort2Ticks,
+        //        totalTicks);
     #endif
     return totalTicks;
 }
