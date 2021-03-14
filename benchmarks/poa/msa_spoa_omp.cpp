@@ -119,7 +119,7 @@ void readFile(ifstream& in_file, vector<Batch>& batches) {
 void help() {
     std::cout <<
         "\n"
-        "usage: ./msa_spoa_omp [options ...]\n"
+        "usage: ./poa -s input.fasta -t <num_threads> > cons.fasta\n"
         "\n"
         "    options:\n"
         "        -m <int>\n"
