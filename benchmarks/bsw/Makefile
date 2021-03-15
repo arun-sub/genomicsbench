@@ -32,7 +32,31 @@
 EXE=		bsw
 CXX=		g++
 #CXX=		icpc
-CXXFLAGS=	-DSORT_PAIRS -DENABLE_PREFETCH -DBWA_OTHER_ELE=0 -O3 -std=c++11 -fopenmp -mavx2 #-mtune=native -march=native
+
+ARCH_FLAGS=	-msse4.1
+
+ifeq ($(arch),sse)
+	ARCH_FLAGS=-msse4.1
+else ifeq ($(arch),avx2)
+	ifeq ($(CXX), icpc)
+		ARCH_FLAGS=-march=core-avx2 #-xCORE-AVX2
+	else	
+		ARCH_FLAGS=-mavx2
+	endif
+else ifeq ($(arch),avx512)
+	ifeq ($(CXX), icpc)
+		ARCH_FLAGS=-xCORE-AVX512
+	else	
+		ARCH_FLAGS=-mavx512bw
+	endif
+else ifeq ($(arch),native)
+		ARCH_FLAGS=-march=native
+else ifneq ($(arch),)
+	## To provide a different architecture flag like -march=core-avx2.
+		ARCH_FLAGS=$(arch)
+endif
+
+CXXFLAGS=	-DSORT_PAIRS -DENABLE_PREFETCH -DBWA_OTHER_ELE=0 -O3 -std=c++11 -fopenmp $(ARCH_FLAGS) #-mtune=native -march=native
 #VTUNE_HOME= /opt/intel/vtune_profiler
 INCLUDES=
 LIBS=		-fopenmp -lz

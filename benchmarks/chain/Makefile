@@ -22,10 +22,34 @@ OBJECTS = $(SOURCES:$(SRC_PATH)/%.$(SRC_EXT)=$(BUILD_PATH)/%.o)
 # Set the dependency files that will be used to add header dependencies
 DEPS = $(OBJECTS:.o=.d)
 
+
+ARCH_FLAGS=	-msse4.1
+
+ifeq ($(arch),sse)
+	ARCH_FLAGS=-msse4.1
+else ifeq ($(arch),avx2)
+	ifeq ($(CXX), icpc)
+		ARCH_FLAGS=-march=core-avx2 #-xCORE-AVX2
+	else	
+		ARCH_FLAGS=-mavx2
+	endif
+else ifeq ($(arch),avx512)
+	ifeq ($(CXX), icpc)
+		ARCH_FLAGS=-xCORE-AVX512
+	else	
+		ARCH_FLAGS=-mavx512bw
+	endif
+else ifeq ($(arch),native)
+		ARCH_FLAGS=-march=native
+else ifneq ($(arch),)
+	## To provide a different architecture flag like -march=core-avx2.
+		ARCH_FLAGS=$(arch)
+endif
+
 # flags #
 #COMPILE_FLAGS = -std=c++11 -Wall -Wextra -g -O3 -fopenmp -xAVX2 -axAVX2
 #VTUNE_HOME= /opt/intel/vtune_profiler
-COMPILE_FLAGS = -std=c++11 -Wall -Wextra -g -O3 -fopenmp -mavx2
+COMPILE_FLAGS = -std=c++11 -Wall -Wextra -g -O3 -fopenmp $(ARCH_FLAGS)
 INCLUDES = -I../../tools/minimap2
 # Space-separated pkg-config libraries used by this project
 LIBS = -L../../tools/minimap2 -lminimap2
@@ -71,7 +95,7 @@ all: $(BIN_PATH)/$(BIN_NAME)
 $(BIN_PATH)/$(BIN_NAME): $(OBJECTS)
 	@echo "Linking: $@"
 	#$(CXX) -O3 -fopenmp -xAVX2 -axAVX2 $(OBJECTS) -o $@
-	$(CXX) -O3 -fopenmp -mavx2 $(OBJECTS) $(INCLUDES) $(LIBS) -o $@
+	$(CXX) -O3 -fopenmp $(ARCH_FLAGS) $(OBJECTS) $(INCLUDES) $(LIBS) -o $@
 
 # Add dependency files, if they exist
 -include $(DEPS)
