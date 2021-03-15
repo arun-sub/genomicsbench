@@ -18,7 +18,7 @@ all: medaka_common.c medaka_counts.c medaka_bamiter.c
 .PHONY: clean
 
 clean: 
-	cd ../../tools/htslib && $(MAKE) clean
+	#cd ../../tools/htslib && $(MAKE) clean
 	rm -f pileup
 
 medaka_common.c: medaka_common.h

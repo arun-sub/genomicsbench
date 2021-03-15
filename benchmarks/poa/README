@@ -7,4 +7,5 @@ Compile SPOA library: cd ../../tools/spoa; mkdir build; cd build; cmake -DCMAKE_
 Compile kernel: make
 Usage: ./poa -s <input.fasta> -t <num_threads> > cons.fasta
 
-E.g: ./poa -s input.fasta -t 1 > cons.fasta
+E.g: small: ./poa -s input-1000.fasta -t 1 > cons-1000.fasta
+     large: ./poa -s input.fasta -t 1 > cons.fasta

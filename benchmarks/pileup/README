@@ -1,4 +1,4 @@
-Compile: cd htslib && make && cd .. && make
-
+Compile: make
 Usage: ./pileup <bam> <region> <num_threads> > pileup.txt
-E.g: ./pileup /y/arunsub/punnet_data/inputs/pileup/saureus.bam tig00000061:1-1499707 1 > /y/arunsub/punnet_data/inputs/pileup/pileup.txt
+E.g: small: ./pileup saureus.bam tig00000061:1-1499707 1 > pileup.txt
+     large: ./pileup HG002_prom_R941_guppy360_2_GRCh38_ch20.bam chr20:1-64444167 1 > pileup.txt
