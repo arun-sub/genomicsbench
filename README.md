@@ -4,6 +4,12 @@
 
 A benchmark suite for genomics
 
+## Download
+
+```bash
+git clone --recursive https://github.com/arun-sub/genomicsbench.git
+```
+
 ## Compilation (for CPU benchmarks)
 
 * RHEL/Fedora system prerequisites

@@ -8,7 +8,7 @@ MKL_IOMP5_DIR=/opt/intel/oneapi/compiler/2021.1.2/linux/compiler/lib/intel64_lin
 .PHONY: clean
 
 all:
-	echo "Starting build..this may take a while.."
+	$(info Starting build..this may take a while..)
 	cd tools/htslib && autoreconf -i && ./configure && $(MAKE)
 	cd tools/bwa-mem2; $(MAKE) CXX=$(CXX) arch=$(ARCH) VTUNE_HOME=$(VTUNE_HOME)
 	cd benchmarks/fmi; $(MAKE) CXX=$(CXX) arch=$(ARCH) VTUNE_HOME=$(VTUNE_HOME)
@@ -23,7 +23,7 @@ all:
 	cd benchmarks/pileup; $(MAKE) CC=$(CC) arch=$(ARCH) VTUNE_HOME=$(VTUNE_HOME)
 	cd benchmarks/kmer-cnt; $(MAKE) CXX=$(CXX) arch=$(ARCH) VTUNE_HOME=$(VTUNE_HOME)
 	cd benchmarks/grm/2.0/build_dynamic; $(MAKE) CC=$(CC) CXX=$(CXX) arch=$(ARCH) VTUNE_HOME=$(VTUNE_HOME) MKLROOT=$(MKLROOT) MKL_IOMP5_DIR=$(MKL_IOMP5_DIR) #needs MKL
-	echo "Successfully built GenomicsBench!"
+	$(info Successfully built GenomicsBench!)
 
 clean:
 	cd tools/bwa-mem2; $(MAKE) clean
