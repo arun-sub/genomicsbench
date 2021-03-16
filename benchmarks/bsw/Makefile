@@ -57,9 +57,9 @@ else ifneq ($(arch),)
 endif
 
 CXXFLAGS=	-DSORT_PAIRS -DENABLE_PREFETCH -DBWA_OTHER_ELE=0 -O3 -std=c++11 -fopenmp $(ARCH_FLAGS) #-mtune=native -march=native
-#VTUNE_HOME= /opt/intel/vtune_profiler
+#VTUNE_HOME= /opt/intel/oneapi/vtune/2021.1.1
 INCLUDES=
-LIBS=		-fopenmp -lz
+LIBS=		-fopenmp -lz -ldl
 
 ifneq ($(VTUNE_HOME),)
 CXXFLAGS+= -DVTUNE_ANALYSIS=1

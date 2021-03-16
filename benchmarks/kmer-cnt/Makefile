@@ -1,7 +1,7 @@
 CXX     = g++
 #CXX		 = icpc
 #VTUNE_HOME= /opt/intel/vtune_profiler
-LIBS= -lz -lm -lbz2 -llzma -fopenmp
+LIBS= -lz -lm -lbz2 -llzma -ldl -fopenmp
 CXXFLAGS   = -O3 -fopenmp
 INC = -Ilibcuckoo
 

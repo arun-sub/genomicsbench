@@ -52,7 +52,7 @@ endif
 COMPILE_FLAGS = -std=c++11 -Wall -Wextra -g -O3 -fopenmp $(ARCH_FLAGS)
 INCLUDES = -I../../tools/minimap2
 # Space-separated pkg-config libraries used by this project
-LIBS = -L../../tools/minimap2 -lminimap2
+LIBS = -L../../tools/minimap2 -lminimap2 -ldl
 
 
 ifneq ($(VTUNE_HOME),)

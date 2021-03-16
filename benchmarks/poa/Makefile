@@ -26,7 +26,7 @@ endif
 CXXFLAGS=-O3 -fopenmp $(ARCH_FLAGS)
 #VTUNE_HOME= /opt/intel/vtune_profiler
 INCLUDES=-I../../tools/spoa/include
-LIBS=-L../../tools/spoa/build/lib/ -lspoa -fopenmp
+LIBS=-L../../tools/spoa/build/lib/ -lspoa -ldl -fopenmp
 
 ifneq ($(VTUNE_HOME),)
 CXXFLAGS+= -DVTUNE_ANALYSIS=1

@@ -1,19 +1,18 @@
 CC     = gcc
 #CC		= icc
 #VTUNE_HOME= /opt/intel/vtune_profiler
-LIBS = -lz -lm -lbz2 -llzma -lpthread -lcurl -lcrypto -fopenmp
-CCFLAGS   = -g -Wall -pthread -fstack-protector-strong -D_FORTIFY_SOURCE=2 -fPIC -std=c99 -O3 -fopenmp
+LIBS = -lz -lm -lbz2 -llzma -lpthread -lcurl -lcrypto -ldl
+CFLAGS   = -g -Wall -pthread -fstack-protector-strong -D_FORTIFY_SOURCE=2 -fPIC -std=c99 -O3 -fopenmp
 INC = -I../../tools/htslib
 
 ifneq ($(VTUNE_HOME),)
-CCFLAGS += -DVTUNE_ANALYSIS=1
-LIBS += -L${VTUNE_HOME}/lib64 -littnotity
+CFLAGS += -DVTUNE_ANALYSIS=1
+LIBS += -L${VTUNE_HOME}/lib64 -littnotify
 INC += -I${VTUNE_HOME}/include
 endif
 
 all: medaka_common.c medaka_counts.c medaka_bamiter.c
-	cd ../../tools/htslib && autoreconf -i && ./configure && $(MAKE)
-	$(CC) $(CCFLAGS) medaka_common.c medaka_counts.c medaka_bamiter.c ../../tools/htslib/libhts.a $(INC) $(LIBS) -o pileup -std=c99 -O3
+	$(CC) medaka_common.c medaka_counts.c medaka_bamiter.c ../../tools/htslib/libhts.a $(CFLAGS) $(INC) $(LIBS) -o pileup
 
 .PHONY: clean
 

@@ -27,7 +27,7 @@ CFLAGS= -g -O2 -std=c++11 $(ARCH_FLAGS)
 #VTUNE_HOME= /opt/intel/vtune_profiler
 GKLPATH= ../../tools/GKL
 INC=
-SHARED_LIBRARIES = -fopenmp -L$(GKLPATH)/build/native -lgkl_pairhmm_c -lstdc++
+SHARED_LIBRARIES = -fopenmp -L$(GKLPATH)/build/native -lgkl_pairhmm_c -lstdc++ -ldl
 
 ifneq ($(VTUNE_HOME),)
 CFLAGS+= -DVTUNE_ANALYSIS=1
