@@ -33,6 +33,7 @@ echo "Running bsw"
 vtune_uarch $OUTPUTS_DIR/bsw_uarch "../benchmarks/bsw/bsw -pairs $INPUTS_DIR/bsw/large/banded_SRR7733443_1m_input.txt -t 1 -b 512"
 
 echo "Running phmm"
+export LD_LIBRARY_PATH=../tools/GKL/build/native:$LD_LIBRARY_PATH
 vtune_uarch $OUTPUTS_DIR/phmm_uarch "../benchmarks/phmm/phmm -f $INPUTS_DIR/phmm/large/large.in -t 1"
 
 echo "Running dbg"
