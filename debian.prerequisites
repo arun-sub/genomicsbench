@@ -13,3 +13,4 @@ cmake
 patch
 libtool
 yasm
+openjdk-8-jdk

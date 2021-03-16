@@ -35,7 +35,7 @@ CXX=		g++
 #VTUNE_HOME= /opt/intel/oneapi/vtune/2021.1.1
 ARCH_FLAGS=	-msse4.1
 
-ifeq ($(arch),sse)
+ifeq ($(arch),sse41)
 	ARCH_FLAGS=-msse4.1
 else ifeq ($(arch),avx2)
 	ifeq ($(CXX), icpc)

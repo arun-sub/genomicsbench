@@ -2,7 +2,7 @@ CC      = gcc
 #CC		= icpc
 ARCH_FLAGS=	-msse4.1
 
-ifeq ($(arch),sse)
+ifeq ($(arch),sse41)
 	ARCH_FLAGS=-msse4.1
 else ifeq ($(arch),avx2)
 	ifeq ($(CXX), icpc)
