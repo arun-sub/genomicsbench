@@ -4,7 +4,24 @@
 
 A benchmark suite for genomics
 
-## Python setup
+## Compilation (for CPU benchmarks)
+
+* RHEL/Fedora system prerequisites
+
+```bash
+sudo yum -y install $(cat rhel.prerequisites)
+```
+* Debian system prerequisites
+
+```bash
+sudo apt-get install $(cat debian.prerequisites)
+```
+
+* Compile
+
+`make -j<num_threads>`
+
+## Python setup (for GPU benchmarks)
 
 To run Python-based benchmarks nn-base and nn-variant, follow the steps below:
 
@@ -37,5 +54,5 @@ If you use GenomicsBench or find GenomicsBench useful, please cite this work:
 
 ## Issues and bug reporting
 
-GenomicsBench is under active development and we appreciate any feedback and suggestions from the community. Feel free to raise an issue on Github or contact the authors: Arun Subramaniyan (arunsub@umich.edu), Yufeng Gu (yufenggu@umich.edu), Timothy Dunn (timdunn@umich.edu).
+GenomicsBench is under active development and we appreciate any feedback and suggestions from the community. Feel free to raise an issue or submit a pull request on Github. For assistance in using GenomicsBench, contact the authors: Arun Subramaniyan (arunsub@umich.edu), Yufeng Gu (yufenggu@umich.edu), Timothy Dunn (timdunn@umich.edu).
 
