@@ -2,7 +2,7 @@
 
 # GenomicsBench
 
-A benchmark suite for genomics
+A benchmark suite covering the major steps in short and long-read genome sequence analysis pipelines such as basecalling, sequence mapping, de-novo assembly, variant calling and polishing.
 
 ## Download
 
@@ -58,7 +58,24 @@ If you use GenomicsBench or find GenomicsBench useful, please cite this work:
 
 > **Arun Subramaniyan, Yufeng Gu, Timothy Dunn, Somnath Paul, Md. Vasimuddin, Sanchit Misra, David Blaauw, Satish Narayanasamy, Reetuparna Das. *GenomicsBench: A Benchmark Suite for Genomics*, In IEEE International Symposium on Performance Analysis of Systems and Software (ISPASS), 2021 (to appear)**
 
+```
+@inproceedings{genomicsbench,
+    title={GenomicsBench: A Benchmark Suite for Genomics}},
+    author={Subramaniyan, Arun and Gu, Yufeng and Dunn, Timothy and Paul, Somnath and Vasimuddin, Md. and Misra, Sanchit and Blaauw, David and Narayanasamy, Satish and Das, Reetuparna},
+    booktitle={Proceedings of the IEEE International Symposium on Performance Analysis of Systems and Software (ISPASS)},
+    year={2021},
+}
+```
+
 ## Issues and bug reporting
 
-GenomicsBench is under active development and we appreciate any feedback and suggestions from the community. Feel free to raise an issue or submit a pull request on Github. For assistance in using GenomicsBench, contact the authors: Arun Subramaniyan (arunsub@umich.edu), Yufeng Gu (yufenggu@umich.edu), Timothy Dunn (timdunn@umich.edu).
+GenomicsBench is under active development and we appreciate any feedback and suggestions from the community. Feel free to raise an issue or submit a pull request on Github. For assistance in using GenomicsBench, please contact: Arun Subramaniyan (arunsub@umich.edu), Yufeng Gu (yufenggu@umich.edu), Timothy Dunn (timdunn@umich.edu)
+
+## Licensing
+
+Each benchmark is individually licensed according to the tool it is extracted from.
+
+## Acknowledgement
+
+This work was supported in part by Precision Health at the University of Michigan, by the Kahn foundation, by the NSF under the CAREER-1652294 award and the Applications Driving Architectures (ADA) Research Center, a JUMP Center co-sponsored by SRC and DARPA.
 
