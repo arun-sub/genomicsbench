@@ -37,7 +37,7 @@ export LD_LIBRARY_PATH=../tools/GKL/build/native:$LD_LIBRARY_PATH
 vtune_pc $OUTPUTS_DIR/phmm_pc "../benchmarks/phmm/phmm -f $INPUTS_DIR/phmm/large/large.in -t 1"
 
 echo "Running dbg"
-vtune_pc $OUTPUTS_DIR/dbg_pc "../benchmarks/dbg/dbg $INPUTS_DIR/dbg/large/ERR194147-mem2-chr22.bam chr22:0-5081846 Homo_sapiens_assembly38.fasta 1"
+vtune_pc $OUTPUTS_DIR/dbg_pc "../benchmarks/dbg/dbg $INPUTS_DIR/dbg/large/ERR194147-mem2-chr22.bam chr22:0-5081846 $INPUTS_DIR/dbg/large/Homo_sapiens_assembly38.fasta 1"
 
 echo "Running chain"
 vtune_pc $OUTPUTS_DIR/chain_pc "../benchmarks/chain/chain -i $INPUTS_DIR/chain/large/c_elegans_40x.10k.in -o $INPUTS_DIR/chain/large/c_elegans_40x.10k.out"
