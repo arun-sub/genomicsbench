@@ -6,11 +6,19 @@ A benchmark suite covering the major steps in short and long-read genome sequenc
 
 ## Download
 
+* Latest source code
+
 ```bash
 git clone --recursive https://github.com/arun-sub/genomicsbench.git
 ```
 
-## Compilation (for CPU benchmarks)
+* Input datasets
+
+```bash
+wget https://genomicsbench.eecs.umich.edu/input-datasets.tar.gz
+```
+
+## Compilation (for 9 CPU benchmarks)
 
 * RHEL/Fedora system prerequisites
 
@@ -25,9 +33,19 @@ sudo apt-get install $(cat debian.prerequisites)
 
 * Compile
 
-`make -j<num_threads>`
+```bash
+make -j<num_threads>`
+```
 
-## Python setup (for GPU benchmarks)
+## Running CPU benchmarks
+
+```bash
+cd scripts
+chmod +x ./run_cpu.sh
+./run_cpu.sh <path to input dataset folder> <input size to run: small | large>
+```
+
+## Python setup (for 3 GPU benchmarks)
 
 To run Python-based benchmarks nn-base and nn-variant, follow the steps below:
 
