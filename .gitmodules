@@ -36,9 +36,6 @@
 [submodule "tools/htslib"]
 	path = tools/htslib
 	url = https://github.com/arun-sub/htslib.git
-[submodule "tools/gatk"]
-	path = tools/gatk
-	url = https://github.com/arun-sub/gatk.git
 [submodule "tools/bonito"]
 	path = tools/bonito
 	url = https://github.com/TimD1/bonito.git
