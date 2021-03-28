@@ -18,7 +18,7 @@ git clone --recursive https://github.com/arun-sub/genomicsbench.git
 wget https://genomicsbench.eecs.umich.edu/input-datasets.tar.gz
 ```
 
-## Prequisites
+## Prerequisites
 
 * RHEL/Fedora system prerequisites
 
