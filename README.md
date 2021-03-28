@@ -64,15 +64,14 @@ pypy3 -m pip install --no-cache-dir intervaltree==3.0.2
 make -j<num_threads>
 ```
 
-Notes: 
-
-- MKLROOT and MKL_IOMPS_DIR variables need to be set in Makefile to run `grm`
-- VTUNE_HOME variable needs to be set if you want to run any VTune based analyses
+  * Notes: 
+    * MKLROOT and MKL_IOMPS_DIR variables need to be set in Makefile to run `grm`
+    * VTUNE_HOME variable needs to be set if you want to run any VTune based analyses
 
 * GPU benchmarks
 
-Set CUDA_LIB=/usr/local/cuda or to the path of the local CUDA installation in Makefile. 
-Also ensure environment variables PATH and LD_LIBRARY_PATH include the path to CUDA binaries and libraries.
+  * Set CUDA_LIB=/usr/local/cuda or to the path of the local CUDA installation in Makefile. 
+  * Also ensure environment variables PATH and LD_LIBRARY_PATH include the path to CUDA binaries and libraries.
 
 ```bash
 make -j<num_threads> gpu
