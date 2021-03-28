@@ -103,7 +103,7 @@ If you use GenomicsBench or find GenomicsBench useful, please cite this work:
     title={GenomicsBench: A Benchmark Suite for Genomics}},
     author={Subramaniyan, Arun and Gu, Yufeng and Dunn, Timothy and Paul, Somnath and Vasimuddin, Md. and Misra, Sanchit and Blaauw, David and Narayanasamy, Satish and Das, Reetuparna},
     booktitle={Proceedings of the IEEE International Symposium on Performance Analysis of Systems and Software (ISPASS)},
-    year={2021},
+    year={2021}
 }
 ```
 
