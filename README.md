@@ -18,7 +18,7 @@ git clone --recursive https://github.com/arun-sub/genomicsbench.git
 wget https://genomicsbench.eecs.umich.edu/input-datasets.tar.gz
 ```
 
-## Compilation (for 9 CPU benchmarks)
+## Prequisites
 
 * RHEL/Fedora system prerequisites
 
@@ -31,21 +31,7 @@ sudo yum -y install $(cat rhel.prerequisites)
 sudo apt-get install $(cat debian.prerequisites)
 ```
 
-* Compile
-
-```bash
-make -j<num_threads>`
-```
-
-## Running CPU benchmarks
-
-```bash
-cd scripts
-chmod +x ./run_cpu.sh
-./run_cpu.sh <path to input dataset folder> <input size to run: small | large>
-```
-
-## Python setup (for 3 GPU benchmarks)
+## Python setup (optional: only needed for GPU benchmarks)
 
 To run Python-based benchmarks nn-base and nn-variant, follow the steps below:
 
@@ -60,7 +46,7 @@ conda config --add channels bioconda
 conda config --add channels conda-forge
 
 # create conda environment named "genomicsbench"
-conda create -n genomicsbench -c bioconda clair
+conda create -n genomicsbench -c bioconda clair python==3.6.8
 conda activate genomicsbench
 conda install deepdish
 
@@ -68,6 +54,46 @@ pip install --upgrade pip
 pip install -r requirements.txt
 pypy3 -m ensurepip
 pypy3 -m pip install --no-cache-dir intervaltree==3.0.2
+```
+
+## Compile
+
+* CPU benchmarks
+
+```bash
+make -j<num_threads>
+```
+
+Notes: 
+
+- MKLROOT and MKL_IOMPS_DIR variables need to be set in Makefile to run `grm`
+- VTUNE_HOME variable needs to be set if you want to run any VTune based analyses
+
+* GPU benchmarks
+
+Set CUDA_LIB=/usr/local/cuda or to the path of the local CUDA installation in Makefile. 
+Also ensure environment variables PATH and LD_LIBRARY_PATH include the path to CUDA binaries and libraries.
+
+```bash
+make -j<num_threads> gpu
+```
+
+## Running
+
+* CPU benchmarks
+
+```bash
+cd scripts
+chmod +x ./run_cpu.sh
+./run_cpu.sh <path to input dataset folder> <input size to run: small | large>
+```
+
+* GPU benchmarks
+
+```bash
+cd scripts
+chmod +x ./run_gpu.sh
+./run_gpu.sh <path to input dataset folder> <input size to run: small | large>
 ```
 
 ## Citation

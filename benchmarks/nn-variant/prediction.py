@@ -32,15 +32,17 @@ def prediction(args, m):
     end_time = time() - begin_time
 
     comp = []
-    for i in range(len(input_mini_match)):
-        comp.append(np.all(np.round(prediction_output[i][0], 3) == np.round(output_mini_match[i][0], 3)))
+    #for i in range(len(input_mini_match)):
+    #    print(prediction_output[i][0], output_mini_match[i][0])
+    #    comp.append(np.all(np.round(prediction_output[i][0], 3) == np.round(output_mini_match[i][0], 3)))
 
-    print(comp)
-    if False not in comp:
-        print("My_prediction function is correct, which takes %.4f s" % end_time)
-    else:
-        print("My_prediction function is wrong, which takes %.4f s" % end_time)
-    dd.io.save("time_counter_my_prediction.h5", time_counter)
+    #print(comp)
+    #if False not in comp:
+    #    print("My_prediction function is correct, which takes %.4f s" % end_time)
+    #else:
+    #    print("My_prediction function is wrong, which takes %.4f s" % end_time)
+    #dd.io.save("time_counter_my_prediction.h5", time_counter)
+    print("Time taken: %.4f s" % end_time)
 
 def Run(args):
 

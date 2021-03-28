@@ -1,9 +1,10 @@
 CXX=g++
 CC=gcc
 ARCH=avx2
-VTUNE_HOME=/opt/intel/oneapi/vtune/2021.1.1
+#VTUNE_HOME=/opt/intel/oneapi/vtune/2021.1.1
 MKLROOT=/opt/intel/oneapi/mkl/2021.1.1
 MKL_IOMP5_DIR=/opt/intel/oneapi/compiler/2021.1.2/linux/compiler/lib/intel64_lin
+CUDA_LIB=/usr/local/cuda
 
 .PHONY: clean
 
@@ -23,6 +24,9 @@ all:
 	cd benchmarks/pileup; $(MAKE) CC=$(CC) arch=$(ARCH) VTUNE_HOME=$(VTUNE_HOME)
 	cd benchmarks/kmer-cnt; $(MAKE) CXX=$(CXX) arch=$(ARCH) VTUNE_HOME=$(VTUNE_HOME)
 	cd benchmarks/grm/2.0/build_dynamic; $(MAKE) CC=$(CC) CXX=$(CXX) arch=$(ARCH) VTUNE_HOME=$(VTUNE_HOME) MKLROOT=$(MKLROOT) MKL_IOMP5_DIR=$(MKL_IOMP5_DIR) #needs MKL
+
+gpu:
+	cd benchmarks/abea; $(MAKE) CUDA_LIB=$(CUDA_LIB)
 
 clean:
 	cd tools/bwa-mem2; $(MAKE) clean
