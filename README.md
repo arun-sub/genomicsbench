@@ -33,7 +33,7 @@ sudo apt-get install $(cat debian.prerequisites)
 
 ## Python setup (optional: only needed for GPU benchmarks)
 
-To run Python-based benchmarks nn-base and nn-variant, follow the steps below:
+To run Python-based benchmarks nn-base, nn-variant and abea, follow the steps below:
 
 * Download and install miniconda from [this](https://docs.conda.io/projects/continuumio-conda/en/latest/user-guide/install/download.html) link.
 
@@ -59,17 +59,14 @@ pypy3 -m pip install --no-cache-dir intervaltree==3.0.2
 ## Compile
 
 * CPU benchmarks
+    * MKLROOT and MKL_IOMPS_DIR variables need to be set in Makefile to run `grm`. If you don't want to run `grm`, please comment `grm` related commands in Makefile
+    * VTUNE_HOME variable needs to be set if you want to run any VTune based analyses
 
 ```bash
 make -j<num_threads>
 ```
 
-  * Notes: 
-    * MKLROOT and MKL_IOMPS_DIR variables need to be set in Makefile to run `grm`
-    * VTUNE_HOME variable needs to be set if you want to run any VTune based analyses
-
 * GPU benchmarks
-
   * Set CUDA_LIB=/usr/local/cuda or to the path of the local CUDA installation in Makefile. 
   * Also ensure environment variables PATH and LD_LIBRARY_PATH include the path to CUDA binaries and libraries.
 
