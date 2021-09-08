@@ -27,7 +27,7 @@ then
 	../benchmarks/fmi/fmi $INPUTS_DIR/fmi/broad $INPUTS_DIR/fmi/large/SRR7733443_10m_1.fastq 512 19 1
 
 	echo "Running bsw"
-	../benchmarks/bsw/bsw -pairs $INPUTS_DIR/bsw/large/banded_SRR7733443_1m_input.txt -t 1 -b 512
+	../benchmarks/bsw/bsw -pairs $INPUTS_DIR/bsw/large/bandedSWA_SRR7733443_1m_input.txt -t 1 -b 512
 
 	echo "Running phmm"
 	export LD_LIBRARY_PATH=../tools/GKL/build/native:$LD_LIBRARY_PATH
@@ -58,7 +58,7 @@ else
 	../benchmarks/fmi/fmi $INPUTS_DIR/fmi/broad $INPUTS_DIR/fmi/small/SRR7733443_1m_1.fastq 512 19 1
 
 	echo "Running bsw"
-	../benchmarks/bsw/bsw -pairs $INPUTS_DIR/bsw/small/banded_SRR7733443_100k_input.txt -t 1 -b 512
+	../benchmarks/bsw/bsw -pairs $INPUTS_DIR/bsw/small/bandedSWA_SRR7733443_100k_input.txt -t 1 -b 512
 
 	echo "Running phmm"
 	export LD_LIBRARY_PATH=../tools/GKL/build/native:$LD_LIBRARY_PATH
