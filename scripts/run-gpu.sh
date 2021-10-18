@@ -21,7 +21,7 @@ fi
 INPUTS_DIR=$1
 INPUTS_SIZE=$2
 
-if [[ ( $INPUTS_SIZE == "large" ) ]]
+if [[ ( $INPUTS_SIZE == "small" ) ]]
 then
 
 	echo "Running nn-base"
