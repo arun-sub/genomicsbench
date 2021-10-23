@@ -9,7 +9,7 @@ make
 ### Run
 
 ```
-./bsw -pairs input.txt > output.txt_
+./bsw -pairs input.txt > output.txt
 ```
 
 If you use `bsw`, please cite:
