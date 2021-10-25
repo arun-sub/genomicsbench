@@ -9,7 +9,7 @@ make
 ### Run
 
 ```
-./bsw -pairs input.txt > output.txt
+sbatch run_test [small | large]
 ```
 
 If you use `bsw`, please cite:
