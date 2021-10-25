@@ -6,6 +6,17 @@ A benchmark suite covering the major steps in short and long-read genome sequenc
 
 # Usage
 
+1) Clone this repository and scalar branch:
 `git clone -b scalar --recursive https://github.com/arun-sub/genomicsbench.git`
 
-Look at the individual folders in `scalar-benchmarks` for usage information.
+2) Change directory to the specific benchmark:
+`cd genomicsbench/scalar-benchmarks/`
+`cd bsw # chain, fmi, phmm`
+
+3) Compile the code:
+`make`
+
+4) Run using small or large dataset:
+`sbatch run_test small # large`
+
+Look at the individual folders in `scalar-benchmarks` for more information.
