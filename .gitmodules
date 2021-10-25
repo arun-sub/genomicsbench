@@ -45,3 +45,6 @@
 [submodule "benchmarks/grm"]
 	path = benchmarks/grm
 	url = https://github.com/arun-sub/plink-ng.git
+[submodule "scalar-benchmarks/fmi/ext/safestringlib"]
+	path = scalar-benchmarks/fmi/ext/safestringlib
+	url = https://github.com/intel/safestringlib
