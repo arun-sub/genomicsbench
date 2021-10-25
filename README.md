@@ -10,8 +10,7 @@ A benchmark suite covering the major steps in short and long-read genome sequenc
 `git clone -b scalar --recursive https://github.com/arun-sub/genomicsbench.git`
 
 2) Change directory to the specific benchmark:
-`cd genomicsbench/scalar-benchmarks/`
-`cd bsw # chain, fmi, phmm`
+`cd genomicsbench/scalar-benchmarks/bsw # chain, fmi, phmm`
 
 3) Compile the code:
 `make`
