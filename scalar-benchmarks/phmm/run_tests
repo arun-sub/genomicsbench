@@ -1,0 +1,21 @@
+#!/bin/bash
+# The interpreter used to execute the script
+
+#“#SBATCH” directives that convey submission options:
+
+#SBATCH --job-name=example_job
+#SBATCH --mail-type=BEGIN,END
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --mem-per-cpu=32000m 
+#SBATCH --time=10:00
+#SBATCH --account=eecs498f21_class
+#SBATCH --partition=gpu
+#SBATCH --gpus-per-node=1
+
+if [ "$#" -ne 1 ] || { [ "$1" != small ] && [ "$1" != large ]; }; then
+    echo "Usage: sbatch run_tests [small | large]"
+    exit 1
+fi
+
+time ./pairhmm /scratch/eecs498f21_class_root/eecs498f21_class/shared_data/genomicsbench-gpu/phmm/$1/input.in > output.out
