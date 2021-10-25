@@ -6,4 +6,6 @@ A benchmark suite covering the major steps in short and long-read genome sequenc
 
 # Usage
 
+`git clone -b scalar --recursive https://github.com/arun-sub/genomicsbench.git`
+
 Look at the individual folders in `scalar-benchmarks` for usage information.
