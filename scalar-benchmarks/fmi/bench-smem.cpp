@@ -36,7 +36,7 @@ Authors: Sanchit Misra <sanchit.misra@intel.com>; Vasimuddin Md <vasimuddin.md@i
 #include <ittnotify.h>
 #endif
 
-#define QUERY_DB_SIZE 2560000000
+#define QUERY_DB_SIZE 2560000000L
 
 #define PRINT_OUTPUT 1
 int myrank, num_ranks;
@@ -49,7 +49,6 @@ void bseq_destroy(bseq1_t *s)
         if(s->comment) free(s->comment);
         if(s->seq) free(s->seq);
         if(s->qual) free(s->qual);
-        if(s->sam) free(s->sam);
         free(s);
     }
 }
@@ -309,7 +308,6 @@ int main(int argc, char **argv) {
     _mm_free(numTotalSmem);
     _mm_free(batchStart);
     delete fmiSearch;
-    bseq_destroy(seqs);
     return 0;
 }
 
