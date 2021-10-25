@@ -12,5 +12,5 @@ make
 ### Run
 
 ```
-./pairhmm test_data/large.in > test_data/large.out
+sbatch run_test [small | large]
 ```
