@@ -9,7 +9,7 @@ make
 ### Run
 
 ```
-./chain -i test_data/c_elegans_40x.10k.in -o test_data/c_elegans_40x.10k.out
+sbatch run_test [small | large]
 ```
 
 If you find `chain` useful, please cite:
