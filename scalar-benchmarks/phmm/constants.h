@@ -23,6 +23,12 @@ struct Constants {
   template <class BASE_TYPE>
   void update(const Read<PRECISION, BASE_TYPE>& read) {
     const auto rows = read.bases.size();
+    mm.resize(rows);
+    gm.resize(rows);
+    mx.resize(rows);
+    xx.resize(rows);
+    my.resize(rows);
+    yy.resize(rows);
     for (auto i = 1u; i != rows; ++i) {
       mm[i] = static_cast<PRECISION>(1) - (read.ins_quals[i] + read.del_quals[i]);
       gm[i] = static_cast<PRECISION>(1) - read.gcp_quals[i];
