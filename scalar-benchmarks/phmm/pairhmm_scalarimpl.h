@@ -163,9 +163,9 @@ protected:
 
 
     // printf("%lf %lf ", log10(static_cast<double>(result)), log10(static_cast<double>(this->INITIAL_CONSTANT)));
-    result = result < this->MIN_ACCEPTED ?
-      this->FAILED_RUN_RESULT : // if we underflowed return failed constant to rerun with higher precision if desired
-      log10(static_cast<double>(result)) - log10(static_cast<double>(this->INITIAL_CONSTANT));
+    result = log10(static_cast<double>(result)) - log10(static_cast<double>(this->INITIAL_CONSTANT));
+    // result = result < this->MIN_ACCEPTED ? this->FAILED_RUN_RESULT : result;
+    // if we underflowed return failed constant to rerun with higher precision if desired
     // printf("%lf\n", result);
     return result;
   }
