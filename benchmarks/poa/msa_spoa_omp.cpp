@@ -166,7 +166,7 @@ int main(int argc, char** argv) {
         exit(EXIT_FAILURE);
     }
 
-    char opt, *s; int n_seqs = 0, numThreads = 1;
+    char *s; int n_seqs = 0, numThreads = 1, opt;
     while ((opt = getopt(argc, argv, "l:m:x:o:n:e:q:c:s:t:h")) != -1) {
         switch (opt) {
             case 'm': m = atoi(optarg); break;

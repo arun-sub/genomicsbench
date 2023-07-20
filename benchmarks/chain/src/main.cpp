@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
     FILE *in, *out;
     std::string inputFileName, outputFileName;
 
-    char opt, numThreads = 1;
+    int opt, numThreads = 1;
     while ((opt = getopt(argc, argv, ":i:o:t:h")) != -1) {
         switch (opt) {
             case 'i': inputFileName = optarg; break;

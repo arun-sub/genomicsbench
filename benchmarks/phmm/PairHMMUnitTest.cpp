@@ -176,7 +176,7 @@ int main(int argc, char** argv) {
         std::cout << USAGE_MESSAGE;
         exit(EXIT_FAILURE);
     }
-    for (char c; (c = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1;) {
+    for (int c; (c = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1;) {
         switch (c) {
             case 'f': opt::testfile = optarg; break;
             case 'l': opt::loop = stoi(optarg); break;
