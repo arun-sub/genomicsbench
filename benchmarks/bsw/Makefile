@@ -56,7 +56,8 @@ else ifneq ($(arch),)
 		ARCH_FLAGS=$(arch)
 endif
 
-CXXFLAGS=	-DSORT_PAIRS -DENABLE_PREFETCH -DBWA_OTHER_ELE=0 -O3 -std=c++11 -fopenmp $(ARCH_FLAGS) #-mtune=native -march=native
+# fno-strict-aliasing is required to prevent errors in vector code.
+CXXFLAGS=	-DSORT_PAIRS -DENABLE_PREFETCH -DBWA_OTHER_ELE=0 -O3 -std=c++11 -fno-strict-aliasing -fopenmp $(ARCH_FLAGS) #-mtune=native -march=native
 #VTUNE_HOME= /opt/intel/oneapi/vtune/2021.1.1
 INCLUDES=
 LIBS=		-fopenmp -lz -ldl
@@ -83,5 +84,5 @@ clean:
 
 
 # DO NOT DELETE
-main_banded.o: bandedSWA.h macro.h utils.h
-bandedSWA.o: bandedSWA.h macro.h utils.h
+main_banded.o: bandedSWA.h macro.h utils.h sse2sve.h
+bandedSWA.o: bandedSWA.h macro.h utils.h sse2sve.h

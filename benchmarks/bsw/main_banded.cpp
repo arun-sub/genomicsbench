@@ -294,7 +294,18 @@ int main(int argc, char *argv[])
         __itt_pause();
     #endif
     totalTicks += __rdtsc() - startTick;
-    printf("Executed AVX2 vector code...\n");
+
+#if __AVX512BW__
+	printf("Executed AVX512 vector code...\n");
+#elif __AVX2__
+	printf("Executed AVX2 vector code...\n");
+#elif __SSE2__
+	printf("Executed SSE2 vector code...\n");
+#elif __ARM_FEATURE_SVE
+	printf("Executed SVE vector code...\n");
+#else
+	printf("Executed serial code...\n");
+#endif
 
 	tim = __rdtsc();
 	sleep(1);
