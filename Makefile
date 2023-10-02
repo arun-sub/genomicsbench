@@ -24,6 +24,7 @@ all:
 	cd benchmarks/pileup; $(MAKE) CC=$(CC) arch=$(ARCH) VTUNE_HOME=$(VTUNE_HOME)
 	cd benchmarks/kmer-cnt; $(MAKE) CXX=$(CXX) arch=$(ARCH) VTUNE_HOME=$(VTUNE_HOME)
 	cd benchmarks/grm/2.0/build_dynamic; $(MAKE) CC=$(CC) CXX=$(CXX) arch=$(ARCH) VTUNE_HOME=$(VTUNE_HOME) MKLROOT=$(MKLROOT) MKL_IOMP5_DIR=$(MKL_IOMP5_DIR) #needs MKL
+	cd benchmarks/wfa; $(MAKE) CXX=$(CXX) arch=$(ARCH) VTUNE_HOME=$(VTUNE_HOME)
 
 gpu:
 	cd benchmarks/abea; $(MAKE) CUDA_LIB=$(CUDA_LIB)
@@ -41,3 +42,4 @@ clean:
 	cd benchmarks/pileup; $(MAKE) clean
 	cd benchmarks/kmer-cnt; $(MAKE) clean
 	cd benchmarks/grm/2.0/build_dynamic; $(MAKE) clean
+	cd benchmarks/wfa; $(MAKE) clean
