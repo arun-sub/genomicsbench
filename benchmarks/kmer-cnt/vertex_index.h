@@ -25,8 +25,8 @@ typedef std::map<size_t, size_t> KmerDistribution;
 class KmerCounter
 {
 public:
-	KmerCounter(const SequenceContainer& seqContainer):
-		_seqContainer(seqContainer), 
+	KmerCounter(const SequenceContainer& seqContainer, bool highmem):
+		_seqContainer(seqContainer), _highmem(highmem),
 		_flatCounter(nullptr), _numKmers(0)
 	{}
 
@@ -54,6 +54,7 @@ private:
 	const SequenceContainer& 	_seqContainer;
 	bool _outputProgress;
 	bool _useFlatCounter;
+	bool _highmem;
 
 	std::atomic<uint8_t>*			_flatCounter;
 	//std::vector<std::atomic<char>>  _flatCounter;
@@ -70,10 +71,10 @@ public:
 	{
 		this->clear();
 	}
-	VertexIndex(const SequenceContainer& seqContainer, float sampleRate):
+	VertexIndex(const SequenceContainer& seqContainer, float sampleRate, bool highmem):
 		_seqContainer(seqContainer), _outputProgress(false), 
 		_sampleRate(sampleRate), _repetitiveFrequency(0),
-		_kmerCounter(seqContainer)
+		_kmerCounter(seqContainer, highmem)
 		//_solidMultiplier(1)
 		//_flankRepeatSize(flankRepeatSize)
 	{}
