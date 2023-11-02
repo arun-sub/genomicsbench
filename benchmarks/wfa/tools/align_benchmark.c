@@ -116,11 +116,17 @@ input_pair_sequences_t** parse_input_sequences(
       for (size_t i = 0; i < omp_get_num_threads(); ++i) {
         #pragma omp critical
         {
+          char *foo_line = NULL;
           char *line1 = NULL; 
           char *line2 = NULL;
 
+          size_t foo_line_allocated = 0;
           size_t line1_allocated = 0;
           size_t line2_allocated = 0;
+
+          // Read BSW score (unused).
+          getline(&foo_line, &foo_line_allocated, input_file);
+          free(foo_line);
 
           // Read queries
           int line1_length = getline(&line1, &line1_allocated, input_file);
@@ -135,12 +141,12 @@ input_pair_sequences_t** parse_input_sequences(
           }
           else {
             // Process input
-            char* const pattern = line1 + 1;
-            const int pattern_length = line1_length - 2;
+            char* const pattern = line1;
+            const int pattern_length = line1_length - 1;
             pattern[pattern_length] = '\0';
 
-            char* const text = line2 + 1;
-            const int text_length = line2_length - 2;
+            char* const text = line2;
+            const int text_length = line2_length - 1;
             text[text_length] = '\0';
 
             // Allocate
