@@ -8,13 +8,13 @@
 #include <algorithm>
 #include <queue>
 #include <cmath>
+#include <atomic>
 
 #include "vertex_index.h"
 #include "logger.h"
 #include "parallel.h"
 #include "config.h"
 #include "memory_info.h"
-
 
 void VertexIndex::countKmers()
 {
@@ -509,11 +509,12 @@ void VertexIndex::clear()
 	//_kmerCounts.reserve(0);
 }
 
-
 void KmerCounter::count(bool useFlatCounter)
 {
 	//Logger::get().debug() << "Before counter: " 
 	//	<< getPeakRSS() / 1024 / 1024 / 1024 << " Gb";
+
+	_numKmers = 0;
 
 	if (useFlatCounter && Parameters::get().kmerSize > 17)
 	{
@@ -521,9 +522,11 @@ void KmerCounter::count(bool useFlatCounter)
 	}
 	_useFlatCounter = useFlatCounter;
 
-	//flat array for all possible k-mers, 4 bits for each
-	//in case of k=17, takes 8Gb
-	static const size_t COUNTER_LEN = std::pow(4, Parameters::get().kmerSize) / 2;
+	//flat array for all possible k-mers, 8 bits for each
+	//in case of k=17, takes 16Gb
+	
+	static const size_t COUNTER_LEN = _highmem ? std::pow(4, Parameters::get().kmerSize) :
+	                                             std::pow(4, Parameters::get().kmerSize) / 2;
 	if (useFlatCounter)
 	{
 		_flatCounter = new std::atomic<uint8_t>[COUNTER_LEN];
@@ -535,31 +538,52 @@ void KmerCounter::count(bool useFlatCounter)
 	[this] (const FastaRecord::Id& readId)
 	{
 		if (!readId.strand()) return;
+
+		size_t pnumKmers = 0;
 		
 		for (auto kmerPos : IterKmers(_seqContainer.getSeq(readId)))
 		{
 			kmerPos.kmer.standardForm();
 			bool addOne = true;
+
 			if (_useFlatCounter)
 			{
-				size_t arrayPos = kmerPos.kmer.numRepr() / 2;
-				bool highBits = kmerPos.kmer.numRepr() % 2;
-
-				while (true)
+				if (_highmem)
 				{
-					uint8_t expected = _flatCounter[arrayPos]; 
-					uint8_t count = highBits ? (expected >> 4) : (expected & 15);
-					if (count == 15)
-					{
-						break;
-					}
+					addOne = false;
 
-					uint8_t updated = highBits ? (expected + 16) : (expected + 1);
-					if (_flatCounter[arrayPos].compare_exchange_weak(expected,  updated))
+					size_t arrayPos = kmerPos.kmer.numRepr();
+					uint8_t old = _flatCounter[arrayPos].fetch_add(1, std::memory_order_relaxed);
+
+					if (old == 0 && !_hashCounter.contains(kmerPos.kmer))
 					{
-						if (count == 0) ++_numKmers;
-						addOne = false; //not saturated yet, don't update hash counter
-						break;
+						++pnumKmers;
+					}
+					else if (old == 255)
+					{
+						addOne = true;
+					}
+				}
+				else {
+					size_t arrayPos = kmerPos.kmer.numRepr() / 2;
+					bool highBits = kmerPos.kmer.numRepr() % 2;
+
+					while (true)
+					{
+						uint8_t expected = _flatCounter[arrayPos]; 
+						uint8_t count = highBits ? (expected >> 4) : (expected & 15);
+						if (count == 15)
+						{
+							break;
+						}
+
+						uint8_t updated = highBits ? (expected + 16) : (expected + 1);
+						if (_flatCounter[arrayPos].compare_exchange_weak(expected,  updated))
+						{
+							if (count == 0) ++pnumKmers;
+							addOne = false; //not saturated yet, don't update hash counter
+							break;
+						}
 					}
 				}
 			}
@@ -569,6 +593,8 @@ void KmerCounter::count(bool useFlatCounter)
 				_hashCounter.upsert(kmerPos.kmer, [](size_t& num){++num;}, 1);
 			}
 		}
+
+		_numKmers += pnumKmers;
 	};
 	std::vector<FastaRecord::Id> allReads;
 	for (const auto& seq : _seqContainer.iterSeqs())
@@ -583,58 +609,48 @@ void KmerCounter::count(bool useFlatCounter)
 	else {
 		processInParallel(allReads, readUpdate, Parameters::get().numThreads, _outputProgress);
 	}
-    /*
-	Logger::get().debug() << "Updating k-mer histogram";
-	if (_useFlatCounter)
-	{
-		for (size_t kmerId = 0; kmerId < COUNTER_LEN * 2; ++kmerId)
-		{
-			Kmer kmer(kmerId);
-			size_t freq = this->getFreq(kmer);
-			if (freq > 0) _kmerDistribution[freq] += 1;
-			// if (kmerId % 1000000 == 0) Logger::get().debug() << kmerId << " " << freq;
-		}
-	}
-	else
-	{
-		for (const auto& kmer : _hashCounter.lock_table())
-		{
-			_kmerDistribution[kmer.second] += 1;
-		}
-	}
-    */
 
-	//Logger::get().debug() << "After counter: " 
-	//	<< getPeakRSS() / 1024 / 1024 / 1024 << " Gb";
+	if (!_useFlatCounter) {
+		_numKmers = _hashCounter.size();
+	}
 
 	Logger::get().debug() << "Hash size: " << _hashCounter.size();
 	Logger::get().debug() << "Total k-mers " << _numKmers;
 }
 
-
 size_t KmerCounter::getFreq(Kmer kmer) const
 {
-	//kmer.standardForm();
+	size_t freq;
+	if (!_hashCounter.find(kmer, freq)) 
+	{
+		freq = 0;
+	}
 
-	size_t addCount = 0;
 	if (_useFlatCounter)
 	{
-		size_t arrayPos = kmer.numRepr() / 2;
-		bool highBits = kmer.numRepr() % 2;
-		uint8_t count = highBits ? (_flatCounter[arrayPos]) >> 4 : (_flatCounter[arrayPos] & 15);
-		if (count < 15) 
+		if (_highmem) 
 		{
-			return count;
+			size_t arrayPos = kmer.numRepr();
+			freq = freq * 255 + _flatCounter[arrayPos];
 		}
 		else
 		{
-			addCount = count;
+			size_t arrayPos = kmer.numRepr() / 2;
+			bool highBits = kmer.numRepr() % 2;
+			uint8_t count = highBits ? (_flatCounter[arrayPos]) >> 4 : (_flatCounter[arrayPos] & 15);
+
+			if (count < 15) 
+			{
+				freq = count;
+			}
+			else
+			{
+				freq += count;
+			}
 		}
 	}
 
-	size_t freq = 0;
-	_hashCounter.find(kmer, freq);
-	return freq + addCount;
+	return freq;
 }
 
 void KmerCounter::clear()
@@ -650,6 +666,5 @@ void KmerCounter::clear()
 
 size_t KmerCounter::getKmerNum() const
 {
-	if (!_useFlatCounter) return _hashCounter.size();
 	return _numKmers;
 }

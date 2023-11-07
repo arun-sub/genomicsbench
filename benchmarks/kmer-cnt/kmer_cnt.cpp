@@ -29,7 +29,8 @@
 bool parseArgs(int argc, char** argv, std::string& readsFasta, 
 			   std::string& logFile,
 			   int& kmerSize, bool& debug, size_t& numThreads, int& minOverlap, 
-			   std::string& configPath, int& minReadLength, bool& unevenCov)
+			   std::string& configPath, int& minReadLength, bool& unevenCov,
+			   bool& highmem)
 {
 	auto printUsage = []()
 	{
@@ -49,7 +50,9 @@ bool parseArgs(int argc, char** argv, std::string& readsFasta,
 				  << "  --log log_file\toutput log to file "
 				  << "[default = not set] \n"
 				  << "  --threads num_threads\tnumber of parallel threads "
-				  << "[default = 1] \n";
+				  << "[default = 1] \n"
+				  << "  --highmem \t\tuse more memory for faster kmer counting "
+				  << "[default = false] \n";
 	};
 	
 	int optionIndex = 0;
@@ -63,6 +66,7 @@ bool parseArgs(int argc, char** argv, std::string& readsFasta,
 		{"kmer", required_argument, 0, 0},
 		{"min-ovlp", required_argument, 0, 0},
 		{"debug", no_argument, 0, 0},
+		{"highmem", no_argument, 0, 0},
 		{0, 0, 0, 0}
 	};
 
@@ -90,6 +94,8 @@ bool parseArgs(int argc, char** argv, std::string& readsFasta,
 				readsFasta = optarg;
 			else if (!strcmp(longOptions[optionIndex].name, "config"))
 				configPath = optarg;
+			else if (!strcmp(longOptions[optionIndex].name, "highmem"))
+				highmem = true;
 			break;
 
 		case 'h':
@@ -145,10 +151,11 @@ int main(int argc, char** argv)
 	std::string readsFasta;
 	std::string logFile;
 	std::string configPath;
+	bool highmem = false;
 
 	if (!parseArgs(argc, argv, readsFasta, logFile,
 				   kmerSize, debugging, numThreads, minOverlap, configPath, 
-				   minReadLength, unevenCov)) return 1;
+				   minReadLength, unevenCov, highmem)) return 1;
 
 	Logger::get().setDebugging(debugging);
 	if (!logFile.empty()) Logger::get().setOutputFile(logFile);
@@ -198,8 +205,9 @@ int main(int argc, char** argv)
 		return 1;
 	}
 	readsContainer.buildPositionIndex();
-	VertexIndex vertexIndex(readsContainer, 
-							(int)Config::get("assemble_kmer_sample"));
+	VertexIndex vertexIndex(readsContainer,
+							(int)Config::get("assemble_kmer_sample"),
+							highmem);
 	vertexIndex.outputProgress(true);
 
 	/*int64_t sumLength = 0;
