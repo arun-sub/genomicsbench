@@ -58,6 +58,8 @@ pypy3 -m pip install --no-cache-dir intervaltree==3.0.2
 
 ## Compile
 
+Note that the benchmarks have only been tested on gcc/g++-9 because of the dependency of related kernels. If there are multiple gcc/g++ versions, please refer to [update-alternative](https://linuxconfig.org/how-to-switch-between-multiple-gcc-and-g-compiler-versions-on-ubuntu-20-04-lts-focal-fossa) to configure gcc/g++-9.
+
 * CPU benchmarks
     * MKLROOT and MKL_IOMPS_DIR variables need to be set in Makefile to run `grm`. If you don't want to run `grm`, please comment `grm` related commands in Makefile
     * VTUNE_HOME variable needs to be set if you want to run any VTune based analyses

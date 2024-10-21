@@ -1,7 +1,8 @@
 autoconf
 automake
 make
-gcc
+gcc-9
+g++-9
 perl
 zlib1g-dev
 libbz2-dev
