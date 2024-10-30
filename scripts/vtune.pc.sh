@@ -42,6 +42,9 @@ vtune_pc $OUTPUTS_DIR/dbg_pc "../benchmarks/dbg/dbg $INPUTS_DIR/dbg/large/ERR194
 echo "Running chain"
 vtune_pc $OUTPUTS_DIR/chain_pc "../benchmarks/chain/chain -i $INPUTS_DIR/chain/large/c_elegans_40x.10k.in -o $INPUTS_DIR/chain/large/c_elegans_40x.10k.out"
 
+echo "Running fast-chain"
+vtune_pc $OUTPUTS_DIR/fast-chain_pc "../benchmarks/fast-chain/chain -i $INPUTS_DIR/chain/large/c_elegans_40x.10k.in -o $INPUTS_DIR/fast-chain/large/c_elegans_40x.10k.out"
+
 echo "Running poa"
 vtune_pc $OUTPUTS_DIR/poa_pc "../benchmarks/poa/poa -s $INPUTS_DIR/poa/large/input.fasta -t 1"
 
@@ -54,4 +57,7 @@ vtune_pc $OUTPUTS_DIR/pileup_pc "../benchmarks/pileup/pileup $INPUTS_DIR/pileup/
 echo "Running grm"
 export LD_LIBRARY_PATH=/opt/intel/oneapi/mkl/2021.1.1/lib/intel64:/opt/intel/oneapi/compiler/2021.1.2/linux/compiler/lib/intel64_lin:$LD_LIBRARY_PATH
 vtune_pc $OUTPUTS_DIR/grm_pc "../benchmarks/grm/2.0/build_dynamic/plink2 --maf 0.01 --pgen $INPUTS_DIR/grm/large/chr1_phase3.pgen --pvar $INPUTS_DIR/grm/large/chr1_phase3.pvar --psam $INPUTS_DIR/grm/large/phase3_corrected.psam --make-grm-bin --out $INPUTS_DIR/grm/large/grm --threads 1"
+
+echo "Running wfa"
+vtune_pc $OUTPUTS_DIR/wfa_pc "../benchmarks/wfa/bin/align_benchmark -i $INPUTS_DIR/bsw/large/banded_SRR7733443_1m_input.txt -o checksum.file -t 1"
 

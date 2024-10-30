@@ -22,10 +22,11 @@ void processInParallel(const std::vector<T>& scheduledTasks,
 	ProgressPercent progress(scheduledTasks.size());
 	if (progressBar) progress.advance(0);
 
-	auto threadWorker = [&jobId, &scheduledTasks, &updateFun, 
-						 &progress, progressBar]()
+	#pragma omp parallel for
+	for (size_t i = 0; i < std::min(maxThreads, scheduledTasks.size()); ++i)
 	{
-		while (true)
+		bool finished = false;
+		while (!finished)
 		{
 			size_t expected = 0;
 			while(true)
@@ -33,27 +34,19 @@ void processInParallel(const std::vector<T>& scheduledTasks,
 				expected = jobId;
 				if (jobId == scheduledTasks.size()) 
 				{
-					return;
+					finished = true;
+					break;
 				}
 				if (jobId.compare_exchange_weak(expected, expected + 1))
 				{
 					break;
 				}
 			}
-			updateFun(scheduledTasks[expected]);
-			if (progressBar) progress.advance();
+			if (!finished) {
+				updateFun(scheduledTasks[expected]);
+				if (progressBar) progress.advance();
+			}
 		}
-	};
-
-	std::vector<std::thread> threads(std::min(maxThreads, 
-											  scheduledTasks.size()));
-	for (size_t i = 0; i < threads.size(); ++i)
-	{
-		threads[i] = std::thread(threadWorker);
-	}
-	for (size_t i = 0; i < threads.size(); ++i)
-	{
-		threads[i].join();
 	}
 }
 

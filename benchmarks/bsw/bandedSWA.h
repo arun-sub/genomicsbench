@@ -39,10 +39,13 @@ Authors: Vasimuddin Md <vasimuddin.md@intel.com>; Sanchit Misra <sanchit.misra@i
 
 #if (__AVX512BW__ || __AVX2__)
 #include <immintrin.h>
-#else
+#elif ((!__AVX512BW__) & (!__AVX2__) & (__SSE2__))
 #include <smmintrin.h>  // for SSE4.1
 #define __mmask8 uint8_t
 #define __mmask16 uint16_t
+#elif (__ARM_FEATURE_SVE)
+#include "sse2sve.h"
+#include <arm_sve.h>
 #endif
 
 #define MAX_SEQ_LEN_REF 256
@@ -73,8 +76,13 @@ Authors: Vasimuddin Md <vasimuddin.md@intel.com>; Sanchit Misra <sanchit.misra@i
 #define SIMD_WIDTH16 8
 #endif
 
+#if (__ARM_FEATURE_SVE)
+#define SIMD_WIDTH8 svcntb()
+#define SIMD_WIDTH16 svcnth()
+#endif
+
 // Scalar
-#if ((!__AVX512BW__) & (!__AVX2__) & (!__SSE2__))
+#if ((!__AVX512BW__) & (!__AVX2__) & (!__SSE2__) & (!__ARM_FEATURE_SVE))
 #define SIMD_WIDTH8 1
 #define SIMD_WIDTH16 1
 #endif
@@ -299,6 +307,63 @@ public:
                                      int32_t w);
     
     void smithWaterman512_16(uint16_t seq1SoA[],
+                             uint16_t seq2SoA[],
+                             uint16_t nrow,
+                             uint16_t ncol,
+                             SeqPair *p,
+                             uint16_t h0[],
+                             uint16_t tid,
+                             int32_t numPairs,
+                             int zdrop,
+                             int32_t w,
+                             uint16_t qlen[],
+                             uint16_t myband[]);
+#endif
+
+#if (__ARM_FEATURE_SVE)
+    // 8 bit vector code section    
+    void getScores8(SeqPair *pairArray,
+                    uint8_t *seqBufRef,
+                    uint8_t *seqBufQer,
+                    int32_t numPairs,
+                    uint16_t numThreads,
+                    int32_t w);
+
+    void smithWatermanBatchWrapper8(SeqPair *pairArray,
+                                   uint8_t *seqBufRef,
+                                   uint8_t *seqBufQer,
+                                   int32_t numPairs,
+                                   uint16_t numThreads,
+                                   int32_t w);
+
+    void smithWaterman128_8(uint8_t seq1SoA[],
+                            uint8_t seq2SoA[],
+                            uint8_t nrow,
+                            uint8_t ncol,
+                            SeqPair *p,
+                            uint8_t h0[],
+                            uint16_t tid,
+                            int32_t numPairs,
+                            int zdrop,
+                            int32_t w,
+                            uint8_t qlen[],
+                            uint8_t myband[]);
+    // 16 bit vector code section
+    void getScores16(SeqPair *pairArray,
+                     uint8_t *seqBufRef,
+                     uint8_t *seqBufQer,
+                     int32_t numPairs,
+                     uint16_t numThreads,
+                     int32_t w);
+
+    void smithWatermanBatchWrapper16(SeqPair *pairArray,
+                                     uint8_t *seqBufRef,
+                                     uint8_t *seqBufQer,
+                                     int32_t numPairs,
+                                     uint16_t numThreads,
+                                     int32_t w);
+    
+    void smithWaterman128_16(uint16_t seq1SoA[],
                              uint16_t seq2SoA[],
                              uint16_t nrow,
                              uint16_t ncol,

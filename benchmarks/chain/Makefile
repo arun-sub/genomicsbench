@@ -50,9 +50,9 @@ endif
 #COMPILE_FLAGS = -std=c++11 -Wall -Wextra -g -O3 -fopenmp -xAVX2 -axAVX2
 #VTUNE_HOME= /opt/intel/vtune_profiler
 COMPILE_FLAGS = -std=c++11 -Wall -Wextra -g -O3 -fopenmp $(ARCH_FLAGS)
-INCLUDES = -I../../tools/minimap2
+# INCLUDES = -I../../tools/minimap2
 # Space-separated pkg-config libraries used by this project
-LIBS = -L../../tools/minimap2 -lminimap2 -ldl
+# LIBS = -L../../tools/minimap2 -lminimap2 -ldl
 
 
 ifneq ($(VTUNE_HOME),)

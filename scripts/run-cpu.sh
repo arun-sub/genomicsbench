@@ -39,6 +39,9 @@ then
 	echo "Running chain"
 	../benchmarks/chain/chain -i $INPUTS_DIR/chain/large/c_elegans_40x.10k.in -o $INPUTS_DIR/chain/large/c_elegans_40x.10k.out
 
+	echo "Running fast-chain"
+	../benchmarks/fast-chain/chain -i $INPUTS_DIR/chain/large/c_elegans_40x.10k.in -o $INPUTS_DIR/fast-chain/large/c_elegans_40x.10k.out
+
 	echo "Running poa"
 	../benchmarks/poa/poa -s $INPUTS_DIR/poa/large/input.fasta -t 1
 
@@ -52,6 +55,8 @@ then
 	export LD_LIBRARY_PATH=/opt/intel/oneapi/mkl/2021.1.1/lib/intel64:/opt/intel/oneapi/compiler/2021.1.2/linux/compiler/lib/intel64_lin:$LD_LIBRARY_PATH
 	../benchmarks/grm/2.0/build_dynamic/plink2 --maf 0.01 --pgen $INPUTS_DIR/grm/large/chr1_phase3.pgen --pvar $INPUTS_DIR/grm/large/chr1_phase3.pvar --psam $INPUTS_DIR/grm/large/phase3_corrected.psam --make-grm-bin --out $INPUTS_DIR/grm/large/grm --threads 1
 
+	echo "Running wfa"
+	../benchmarks/wfa/bin/align_benchmark -i $INPUTS_DIR/bsw/large/bandedSWA_SRR7733443_1m_input.txt -o checksum.file -t 1
 else
 
 	echo "Running fmi"
@@ -70,6 +75,9 @@ else
 	echo "Running chain"
 	../benchmarks/chain/chain -i $INPUTS_DIR/chain/small/in-1k.txt -o $INPUTS_DIR/chain/small/out-1k.txt
 
+	echo "Running fast-chain"
+	../benchmarks/fast-chain/chain -i $INPUTS_DIR/chain/small/in-1k.txt -o $INPUTS_DIR/fast-chain/small/out-1k.txt
+
 	echo "Running poa"
 	../benchmarks/poa/poa -s $INPUTS_DIR/poa/small/input-1000.fasta -t 1
 
@@ -83,4 +91,6 @@ else
 	export LD_LIBRARY_PATH=/opt/intel/oneapi/mkl/2021.1.1/lib/intel64:/opt/intel/oneapi/compiler/2021.1.2/linux/compiler/lib/intel64_lin:$LD_LIBRARY_PATH
 	../benchmarks/grm/2.0/build_dynamic/plink2 --maf 0.01 --pgen $INPUTS_DIR/grm/small/chr22_phase3.pgen --pvar $INPUTS_DIR/grm/small/chr22_phase3.pvar --psam $INPUTS_DIR/grm/small/phase3_corrected.psam --make-grm-bin --out $INPUTS_DIR/grm/small/grm --threads 1
 
+	echo "Running wfa"
+	../benchmarks/wfa/bin/align_benchmark -i $INPUTS_DIR/bsw/small/bandedSWA_SRR7733443_100k_input.txt -o checksum.file -t 1
 fi
